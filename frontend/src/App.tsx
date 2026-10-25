@@ -3,7 +3,7 @@ import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
 import type { Municipio, Kpis, Occurrence, Alert } from "./types";
 import {
-  Video, LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText,
+  LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText,
   RefreshCw, Mic, Maximize, Minimize, Radio, Camera, CheckCircle2, Siren,
 } from "lucide-react";
 
@@ -222,7 +222,9 @@ export default function App() {
         </div>
       )}
       <header>
-        <div className="logo"><Video size={24} strokeWidth={2.2} /></div>
+        <div className="logo logo-img">
+          <img src="/logo-vigia.png" alt="Vigia Mais MT" />
+        </div>
         <h1>
           Vigia Mais MT<small>Central de monitoramento · demonstração simulada</small>
         </h1>
