@@ -54,7 +54,7 @@ function startAutoSync() {
   const enabled = process.env.OCCURRENCES_AUTO_SYNC !== "false";
   if (!enabled) return;
   sync(source).catch((e) => logger.warn("Sync inicial falhou:", e.message));
-  if (interval > 0) {
+  if (interval > 0 && !process.env.VERCEL) {
     setInterval(() => {
       sync(source).catch((e) => logger.warn("Sync periódico falhou:", e.message));
     }, interval);

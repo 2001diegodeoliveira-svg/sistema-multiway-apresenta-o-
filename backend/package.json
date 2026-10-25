@@ -2,12 +2,15 @@
   "name": "vigia-mais-mt-backend",
   "version": "1.0.0",
   "description": "API + tempo real do sistema de monitoramento Vigia Mais MT",
-  "main": "src/server.js",
+  "main": "index.js",
   "scripts": {
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "seed": "node src/db/seed.js",
     "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "dependencies": {
     "cors": "^2.8.5",
