@@ -130,7 +130,10 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  useSocket({
+  const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
+
+  useSocket(
+    {
     "camera:update": (p: { camera: any; municipio: Municipio }) => {
       setMunicipios((prev) =>
         prev.map((m) => (m.id === p.municipio.id ? p.municipio : m))
@@ -152,7 +155,18 @@ export default function App() {
       else showAlert(a.mensagem, "var(--acc)", "ok");
     },
     "kpis:update": (k: Kpis) => setKpis(k),
-  });
+    },
+    !isVercel
+  );
+
+  // No Vercel (serverless), usa polling REST em vez de WebSocket
+  useEffect(() => {
+    if (!isVercel) return;
+    const t = window.setInterval(() => {
+      loadAll().catch(() => {});
+    }, 60000);
+    return () => window.clearInterval(t);
+  }, [isVercel, loadAll]);
 
   // auto rotation
   const progRef = useRef<HTMLDivElement>(null);
