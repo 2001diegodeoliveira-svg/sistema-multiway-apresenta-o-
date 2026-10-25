@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
 import CamerasView from "./components/CamerasView";
+import { isVigiaAderido } from "./data/vigiaMais";
 import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
@@ -61,9 +62,14 @@ export default function App() {
   const [cur, setCur] = useState("geral");
   const [outlinePath, setOutlinePath] = useState<string>("");
   const [ibgeCodes, setIbgeCodes] = useState<Record<string, number>>({});
+  const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
   const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string }[]>([]);
-  const monitoredCodes = new Set(municipios.map((m) => ibgeCodes[m.nome]).filter(Boolean));
+  const vigiaCodes = new Set(
+    Object.entries(ibgeNames)
+      .filter(([, nome]) => isVigiaAderido(nome))
+      .map(([code]) => Number(code))
+  );
   const [auto, setAuto] = useState(true);
   const [alertMsg, setAlertMsg] = useState<{ text: string; color: string; kind: "warn" | "ok" | "alert" } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
@@ -126,6 +132,7 @@ export default function App() {
           map[m.nome] = m.id;
         });
         setIbgeCodes(map);
+        setIbgeNames(Object.fromEntries((list || []).map((m: any) => [m.id, m.nome])));
       })
       .catch(() => {});
 
@@ -367,7 +374,7 @@ export default function App() {
               {allMunPaths.length > 0 && (
                 <g pointerEvents="none">
                   {allMunPaths.map((m) => {
-                    const isMon = monitoredCodes.has(Number(m.code));
+                    const isMon = vigiaCodes.has(Number(m.code));
                     return (
                       <path
                         key={m.code}
@@ -385,7 +392,7 @@ export default function App() {
               {munBoundary && (
                 <path d={munBoundary} fill="var(--acc)" fillOpacity=".12" stroke="var(--acc)" strokeWidth=".6" />
               )}
-              {municipios.map((m) => {
+              {municipios.filter((m) => isVigiaAderido(m.nome)).map((m) => {
                 const t = m.total;
                 const a = m.cameras.on / t * 100;
                 const c = a >= 90 ? C.on : a >= 86 ? C.man : C.off;
@@ -425,7 +432,7 @@ export default function App() {
               })}
             </svg>
             <div style={{ fontSize: "1.05vh", color: "var(--mut)", marginTop: ".4vh" }}>
-              Malha real via IBGE · municípios com câmeras Vigia Mais MT destacados · clique para ver contorno
+              Malha real via IBGE · 128 municípios aderidos ao Vigia Mais MT destacados (SESP) · clique para ver contorno
             </div>
             <div className="legend">
               <span>
