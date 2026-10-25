@@ -91,9 +91,10 @@ export default function App() {
     return () => window.clearInterval(t);
   }, [loadAll]);
 
-  // IBGE: malha real do estado de MT
+  const IBGE = "https://servicodados.ibge.gov.br/api";
+  // IBGE: malha real do estado de MT (direto no navegador, evita proxy/serverless)
   useEffect(() => {
-    fetch("/api/ibge/malhas/estados/51?qualidade=minima")
+    fetch(`${IBGE}/v3/malhas/estados/51?formato=application/vnd.geo+json&qualidade=minima`)
       .then((r) => r.json())
       .then((gj) => {
         const coords = gj?.features?.[0]?.geometry?.coordinates?.[0];
@@ -105,7 +106,7 @@ export default function App() {
       })
       .catch(() => {});
     // IBGE: lista de municípios (para malhas sob demanda)
-    fetch("/api/ibge/municipios")
+    fetch(`${IBGE}/v1/localidades/estados/51/municipios`)
       .then((r) => r.json())
       .then((list) => {
         const map: Record<string, number> = {};
@@ -117,7 +118,7 @@ export default function App() {
       .catch(() => {});
 
     // IBGE: malha de todos os municípios de MT (intrarregiao=municipio)
-    fetch("/api/ibge/malhas/estados/51?qualidade=minima&intrarregiao=municipio")
+    fetch(`${IBGE}/v3/malhas/estados/51?formato=application/vnd.geo+json&qualidade=minima&intrarregiao=municipio`)
       .then((r) => r.json())
       .then((gj) => {
         const paths = (gj?.features || []).map((f: any) => ({
@@ -358,7 +359,7 @@ export default function App() {
                   <g key={m.id} style={{ cursor: "pointer" }} onClick={() => {
                     const code = ibgeCodes[m.nome];
                     if (!code) return;
-                    fetch(`/api/ibge/malhas/municipios/${code}?qualidade=minima`)
+                    fetch(`https://servicodados.ibge.gov.br/api/v3/malhas/municipios/${code}?formato=application/vnd.geo+json&qualidade=minima`)
                       .then((r) => r.json())
                       .then((gj) => {
                         const coords = gj?.features?.[0]?.geometry?.coordinates;
