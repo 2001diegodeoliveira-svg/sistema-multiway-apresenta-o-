@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vigia Mais MT – Painel v2 (mapa + rotação + tempo real)</title>
+<style>
+:root{--bg:#070d19;--card:rgba(20,32,56,.72);--line:rgba(120,160,220,.16);--tx:#eaf1fb;--mut:#8ea3c4;--on:#22d17a;--off:#ff4d5e;--man:#ffb020;--acc:#3ab8ff;--glow:rgba(58,184,255,.18);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#e9eff7;--card:rgba(255,255,255,.9);--line:rgba(30,60,110,.14);--tx:#0e1a2e;--mut:#51637f;--acc:#0a74c2;--glow:rgba(10,116,194,.14);--on:#12a35c;--off:#d92d40;--man:#d98a00}}
+:root[data-theme="dark"]{--bg:#070d19;--card:rgba(20,32,56,.72);--line:rgba(120,160,220,.16);--tx:#eaf1fb;--mut:#8ea3c4;--acc:#3ab8ff;--glow:rgba(58,184,255,.18)}
+:root[data-theme="light"]{--bg:#e9eff7;--card:rgba(255,255,255,.9);--line:rgba(30,60,110,.14);--tx:#0e1a2e;--mut:#51637f;--acc:#0a74c2;--glow:rgba(10,116,194,.14)}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:radial-gradient(1200px 700px at 15% -10%,var(--glow),transparent 60%),radial-gradient(900px 600px at 100% 110%,var(--glow),transparent 60%),var(--bg);color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;font-size:clamp(11px,1.6vh,19px)}
+.app{height:100%;display:grid;grid-template-rows:auto auto 1fr;gap:1.4vh;padding:1.6vh 1.4vw}
+#prog{position:fixed;top:0;left:0;height:.45vh;width:100%;background:var(--acc);transform-origin:left;transform:scaleX(0);z-index:5}
+@keyframes prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+header{display:flex;align-items:center;gap:1vw}
+.logo{width:5.2vh;height:5.2vh;border-radius:1.3vh;background:linear-gradient(135deg,var(--acc),#6a5cff);display:grid;place-items:center;font-size:2.8vh}
+h1{margin:0;font-size:2.6vh;line-height:1.1}
+h1 small{display:block;font-size:1.2vh;color:var(--mut);font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-top:.3vh}
+.live{display:flex;align-items:center;gap:.4vw;font-size:1.25vh;color:var(--on);font-weight:700;letter-spacing:.12em}
+.live i{width:1.1vh;height:1.1vh;border-radius:50%;background:var(--on);animation:p 1.8s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 var(--on)}70%,100%{box-shadow:0 0 0 1vh transparent}}
+nav{display:flex;gap:.4vw;margin-left:auto}
+button{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:1.2vh;padding:.9vh .9vw;font:inherit;font-size:1.35vh;font-weight:600;cursor:pointer;transition:.2s}
+button:hover{border-color:var(--acc)}
+button.active{background:var(--acc);border-color:var(--acc);color:#04182a}
+#mic.on{background:var(--off);border-color:var(--off);color:#fff}
+.clock{text-align:right;font-variant-numeric:tabular-nums;margin-left:.8vw}
+.clock b{font-size:3.2vh;display:block;line-height:1}
+.clock span{font-size:1.2vh;color:var(--mut);text-transform:capitalize}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:1vw}
+.kpi{position:relative;overflow:hidden;background:var(--card);border:1px solid var(--line);border-radius:1.6vh;padding:1.3vh 1.2vw;display:flex;align-items:center;gap:1vw}
+.kpi::before{content:"";position:absolute;inset:0 auto 0 0;width:.5vh;background:var(--c)}
+.kpi b{font-size:4.8vh;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;color:var(--c)}
+.kpi span{font-size:1.3vh;color:var(--mut);text-transform:uppercase;letter-spacing:.1em;font-weight:600}
+main{min-height:0;display:grid;grid-template-columns:1fr 1.25fr 1fr;gap:1vw;transition:grid-template-columns .6s ease}
+main[data-f="municipios"]{grid-template-columns:2.2fr .8fr .8fr}
+main[data-f="mapa"],main[data-f="atencao"]{grid-template-columns:.8fr 2.2fr .8fr}
+main[data-f="ocorrencias"]{grid-template-columns:.8fr .8fr 2.2fr}
+.col{min-height:0;display:flex;flex-direction:column;gap:1vh}
+.card{min-height:0;flex:1;background:var(--card);border:1px solid var(--line);border-radius:1.6vh;padding:1.4vh 1vw;display:flex;flex-direction:column;transition:.4s}
+#c-map{flex:1.6}
+main[data-f] .card{opacity:.75}
+main[data-f="municipios"] #c-mun,main[data-f="mapa"] #c-map,main[data-f="atencao"] #c-att,main[data-f="ocorrencias"] #c-occ{opacity:1;border-color:var(--acc);box-shadow:0 0 3vh var(--glow)}
+h2{margin:0 0 1vh;font-size:1.4vh;text-transform:uppercase;letter-spacing:.14em;color:var(--mut);font-weight:700;display:flex;justify-content:space-between}
+h2 em{font-style:normal;color:var(--acc)}
+.muns{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between}
+.mun{display:grid;grid-template-columns:32% 1fr 3.6vw;gap:.7vw;align-items:center;font-size:1.5vh}
+.mun.cb{color:var(--acc);font-weight:800}
+.mun.ping{animation:fl 1s 3}
+@keyframes fl{50%{background:var(--glow)}}
+.stack{display:flex;height:1.6vh;border-radius:1vh;overflow:hidden;background:var(--line)}
+.stack i{display:block;height:100%;transition:width .8s}
+.mun em{font-style:normal;text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:1vw;flex-wrap:wrap;font-size:1.15vh;color:var(--mut);margin-top:.8vh}
+.dot{display:inline-block;width:1vh;height:1vh;border-radius:50%;margin-right:.3vw}
+#map{flex:1;min-height:0;width:100%}
+#map text{font-size:3.1px;fill:var(--tx);font-weight:600;paint-order:stroke;stroke:var(--bg);stroke-width:.7px}
+#map .ping{fill:none;stroke-width:.5;animation:rp 1.2s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes rp{from{transform:scale(1);opacity:1}to{transform:scale(2.6);opacity:0}}
+.atts{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between}
+.cam{display:flex;justify-content:space-between;align-items:center;gap:.6vw;padding:.5vh 0;border-bottom:1px solid var(--line);font-size:1.4vh}
+.cam:last-child{border:0}.cam small{display:block;color:var(--mut);font-size:1.1vh}
+.pill{font-size:1.05vh;padding:.35vh .7vw;border-radius:2vh;font-weight:800;text-transform:uppercase;color:#fff;white-space:nowrap}
+.occs{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between;gap:.8vh}
+.occ{flex:1;min-height:0;overflow:hidden;border-left:.5vh solid var(--acc);background:linear-gradient(90deg,var(--glow),transparent);border-radius:0 1.2vh 1.2vh 0;padding:.8vh .8vw;font-size:1.3vh;line-height:1.35}
+.occ.fresh{border-left-color:var(--on);animation:fl 1s 3}
+.occ b{display:block;font-size:1.5vh;margin:.3vh 0}
+.occ p{margin:0;color:var(--mut)}
+.occ time{float:right;color:var(--mut);font-size:1.1vh}
+.tag{display:inline-block;font-size:1vh;padding:.3vh .6vw;border-radius:2vh;background:var(--acc);color:#04182a;font-weight:800;text-transform:uppercase}
+#alert{position:fixed;top:1.4vh;left:50%;transform:translate(-50%,-220%);background:var(--card);border:2px solid var(--c,var(--acc));border-radius:2vh;padding:1vh 2vw;font-size:2vh;font-weight:700;z-index:9;backdrop-filter:blur(10px);transition:transform .5s}
+#alert.show{transform:translate(-50%,0)}
+#heard{position:fixed;left:50%;bottom:1.2vh;transform:translateX(-50%);background:var(--card);border:1px solid var(--line);border-radius:3vh;padding:.7vh 1.4vw;font-size:1.3vh;color:var(--mut);opacity:0;transition:opacity .3s;pointer-events:none}
+#heard.show{opacity:1}
+@media (max-width:900px),(max-aspect-ratio:1/1){
+ body{overflow:auto;font-size:14px}.app{height:auto}
+ header{flex-wrap:wrap}nav{margin-left:0;width:100%;flex-wrap:wrap}
+ .kpis{grid-template-columns:repeat(2,1fr)}main,main[data-f]{grid-template-columns:1fr!important}
+ .kpi b{font-size:32px}.kpi span,.mun,.cam,.occ,h2,button{font-size:13px}.logo{width:44px;height:44px}h1{font-size:20px}
+ #map{height:320px;flex:none}.muns,.atts,.occs{gap:10px}#alert{font-size:15px}
+}
+</style>
+</head>
+<body>
+<div id="prog"></div><div id="alert"></div>
+<div class="app">
+<header>
+  <div class="logo">📹</div>
+  <h1>Vigia Mais MT<small>Central de monitoramento · demonstração simulada</small></h1>
+  <div class="live"><i></i>AO VIVO</div>
+  <nav>
+    <button data-v="geral" class="active">Geral</button>
+    <button data-v="mapa">Mapa</button>
+    <button data-v="municipios">Municípios</button>
+    <button data-v="atencao">Atenção</button>
+    <button data-v="ocorrencias">Ocorrências</button>
+    <button id="auto" class="active">⟳ Auto</button>
+    <button id="mic">🎤</button>
+    <button id="fs">⛶</button>
+  </nav>
+  <div class="clock"><b id="hora">--:--:--</b><span id="data"></span></div>
+</header>
+<section class="kpis" id="kpis"></section>
+<main id="main">
+  <div class="col"><div class="card" id="c-mun">
+    <h2>Câmeras por município <em id="nm"></em></h2>
+    <div class="muns" id="muns"></div>
+    <div class="legend"><span><i class="dot" style="background:var(--on)"></i>Online</span><span><i class="dot" style="background:var(--off)"></i>Offline</span><span><i class="dot" style="background:var(--man)"></i>Manutenção</span></div>
+  </div></div>
+  <div class="col">
+    <div class="card" id="c-map">
+      <h2>Mato Grosso · cobertura <em>tamanho = nº de câmeras</em></h2>
+      <svg id="map" viewBox="0 0 118 107" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="legend"><span><i class="dot" style="background:var(--on)"></i>≥ 90% online</span><span><i class="dot" style="background:var(--man)"></i>86–90%</span><span><i class="dot" style="background:var(--off)"></i>&lt; 86%</span><span>contorno simplificado</span></div>
+    </div>
+    <div class="card" id="c-att"><h2>Precisam de atenção <em>5 mais recentes</em></h2><div class="atts" id="atts"></div></div>
+  </div>
+  <div class="col"><div class="card" id="c-occ"><h2>Ocorrências apoiadas pelo Vigia <em>hoje</em></h2><div class="occs" id="occs"></div></div></div>
+</main>
+</div>
+<div id="heard"></div>
+<script>
+var M=[["Cuiabá",-56.15,-15.55,412,38,21,"l"],["Várzea Grande",-55.98,-15.72,268,24,14,"r"],["Rondonópolis",-54.64,-16.47,196,17,9,"r"],["Sinop",-55.5,-11.86,154,12,8,"r"],["Tangará da Serra",-57.49,-14.62,121,9,6,"l"],["Cáceres",-57.68,-16.07,98,11,5,"l"],["Sorriso",-55.71,-12.54,87,6,4,"r"],["Lucas do Rio Verde",-55.91,-13.05,79,5,3,"l"],["Primavera do Leste",-54.3,-15.55,72,7,4,"r"],["Barra do Garças",-52.26,-15.89,58,8,3,"l"]].map(function(a){return{n:a[0],lon:a[1],lat:a[2],on:a[3],off:a[4],man:a[5],side:a[6]}});
+var OUT=[[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-57,-8.2],[-55.8,-9],[-54.3,-9.9],[-52.5,-9.6],[-50.7,-9.2],[-50.2,-11],[-51,-12.6],[-51.8,-14],[-52.4,-15.6],[-53,-16.9],[-53.6,-17.8],[-55,-17.7],[-56.4,-17.4],[-57.6,-17.5],[-58.4,-16.3],[-60.2,-16.2],[-60,-15.1],[-61.4,-14.9]];
+var O=[["Veículo recuperado","há 18 min","Cuiabá · CPA","Placa identificada por câmera de leitura; viatura interceptou em 12 min."],["Pessoa localizada","há 1 h","Várzea Grande","Imagens do trajeto ajudaram a localizar idoso desaparecido em 40 min."],["Prisão em flagrante","há 2 h","Rondonópolis","Furto filmado e transmitido à central em tempo real."],["Suspeito identificado","há 3 h","Sinop","Imagens usadas para identificar autor de roubo a comércio."],["Apoio a acidente","há 5 h","Cuiabá · Av. do CPA","Câmera confirmou a dinâmica e agilizou o socorro."]];
+var POOL=[["Veículo recuperado","Sorriso","Câmera de leitura localizou veículo furtado na saída da cidade."],["Prisão em flagrante","Tangará da Serra","Tentativa de roubo registrada e equipe acionada em 6 min."],["Pessoa localizada","Cáceres","Criança perdida identificada por câmeras da praça central."],["Suspeito identificado","Lucas do Rio Verde","Imagens permitiram identificar autor de furto em loja."],["Apoio a acidente","Barra do Garças","Colisão confirmada por câmera; SAMU acionado de imediato."]];
+var A=[["Câm. 0412 · Praça Alencastro","Cuiabá · há 3 h","offline"],["Câm. 0877 · Av. Júlio Campos","Várzea Grande · há 50 min","offline"],["Câm. 1203 · Terminal Urbano","Rondonópolis · volta hoje 18h","manutenção"],["Câm. 0391 · Rodoviária","Cuiabá · volta amanhã","manutenção"],["Câm. 0654 · Centro","Cáceres · há 1 dia","offline"]];
+A.forEach(function(a,i){a[3]=["Cuiabá","Várzea Grande","Rondonópolis","Cuiabá","Cáceres"][i]});
+var ping=null,pi=0;
+function $(i){return document.getElementById(i)}
+var C={on:"var(--on)",off:"var(--off)",man:"var(--man)"};
+function renderAll(){
+  var on=0,off=0,man=0;M.forEach(function(m){on+=m.on;off+=m.off;man+=m.man});var tot=on+off+man;
+  $("kpis").innerHTML=[["Total de câmeras",tot,"var(--acc)"],["Online",on,C.on],["Offline",off,C.off],["Em manutenção",man,C.man],["Disponibilidade",(on/tot*100).toFixed(1)+"%","var(--acc)"]].map(function(k){return '<div class="kpi" style="--c:'+k[2]+'"><b>'+k[1]+'</b><span>'+k[0]+'</span></div>'}).join("");
+  $("nm").textContent=M.length+" municípios";
+  $("muns").innerHTML=M.map(function(m){var t=m.on+m.off+m.man;return '<div class="mun'+(m.n=="Cuiabá"?' cb':'')+(m.n==ping?' ping':'')+'"><span>'+m.n+'</span><div class="stack"><i style="width:'+m.on/t*100+'%;background:var(--on)"></i><i style="width:'+m.off/t*100+'%;background:var(--off)"></i><i style="width:'+m.man/t*100+'%;background:var(--man)"></i></div><em>'+t+'</em></div>'}).join("");
+  var px=function(lo){return((lo+61.8)*10).toFixed(1)},py=function(la){return((-7.2-la)*10).toFixed(1)};
+  var s='<defs><pattern id="g" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width=".2"/></pattern></defs><rect width="118" height="107" fill="url(#g)" opacity=".6"/>';
+  s+='<polygon points="'+OUT.map(function(p){return px(p[0])+','+py(p[1])}).join(" ")+'" fill="var(--glow)" stroke="var(--acc)" stroke-width=".5" stroke-linejoin="round"/>';
+  M.forEach(function(m){var t=m.on+m.off+m.man,a=m.on/t*100,c=a>=90?C.on:a>=86?C.man:C.off,r=1.5+Math.sqrt(t)/9,x=px(m.lon),y=py(m.lat);
+    if(m.n==ping)s+='<circle class="ping" cx="'+x+'" cy="'+y+'" r="'+r+'" stroke="'+c+'"/>';
+    s+='<circle cx="'+x+'" cy="'+y+'" r="'+r+'" fill="'+c+'" fill-opacity=".85" stroke="var(--bg)" stroke-width=".4"/>';
+    s+='<text x="'+(m.side=="l"?x-r-1:+x+r+1)+'" y="'+(+y+1.1)+'" text-anchor="'+(m.side=="l"?"end":"start")+'">'+m.n+'</text>'});
+  $("map").innerHTML=s;
+  $("atts").innerHTML=A.slice(0,5).map(function(a){return '<div class="cam"><div>'+a[0]+'<small>'+a[1]+'</small></div><span class="pill" style="background:'+(a[2]=="offline"?C.off:C.man)+'">'+a[2]+'</span></div>'}).join("");
+  $("occs").innerHTML=O.slice(0,5).map(function(o){return '<div class="occ'+(o[4]?' fresh':'')+'"><time>'+o[1]+'</time><span class="tag">'+o[0]+'</span><b>'+o[2]+'</b><p>'+o[3]+'</p></div>'}).join("");
+}
+function alertMsg(t,c){var a=$("alert");a.textContent=t;a.style.setProperty("--c",C[c]);a.classList.add("show");clearTimeout(alertMsg.t);alertMsg.t=setTimeout(function(){a.classList.remove("show")},4500)}
+function sim(){
+  var m=M[Math.floor(Math.random()*M.length)],r=Math.random();
+  if(r<.45&&m.on>5){m.on--;m.off++;A.unshift(["Câm. "+(1000+Math.floor(Math.random()*9000)),m.n+" · agora","offline",m.n]);A=A.slice(0,6);alertMsg("⚠ Câmera offline em "+m.n,"off")}
+  else if(r<.75&&m.off>0){m.off--;m.on++;var i=A.findIndex(function(a){return a[3]==m.n&&a[2]=="offline"});if(i>=0)A.splice(i,1);alertMsg("✔ Câmera restabelecida em "+m.n,"on")}
+  else if(m.man>0){m.man--;m.on++;var j=A.findIndex(function(a){return a[3]==m.n&&a[2]!="offline"});if(j>=0)A.splice(j,1);alertMsg("✔ Manutenção concluída em "+m.n,"on")}
+  else return;
+  ping=m.n;renderAll();setTimeout(function(){ping=null;renderAll()},4000);
+}
+function newOcc(){var p=POOL[pi++%POOL.length];O.forEach(function(o){o[4]=false});O.unshift([p[0],"agora",p[1],p[2],true]);O=O.slice(0,6);renderAll();alertMsg("🚨 Nova ocorrência apoiada: "+p[0],"on");setTimeout(function(){O[0][4]=false;renderAll()},4000)}
+renderAll();setInterval(sim,7000);setInterval(newOcc,28000);
+
+var seq=["geral","mapa","municipios","atencao","ocorrencias"],cur="geral",auto=true,rt;
+function schedule(){clearTimeout(rt);var b=$("prog");b.style.animation="none";void b.offsetWidth;
+  if(auto){b.style.animation="prog 15s linear forwards";rt=setTimeout(function(){show(seq[(seq.indexOf(cur)+1)%seq.length],true)},15000)}}
+function show(v,fromAuto){cur=v;if(!fromAuto){auto=false;$("auto").classList.remove("active")}
+  var m=$("main");if(v=="geral")m.removeAttribute("data-f");else m.setAttribute("data-f",v);
+  document.querySelectorAll("[data-v]").forEach(function(b){b.classList.toggle("active",b.dataset.v==v)});schedule()}
+function setAuto(on){auto=on;$("auto").classList.toggle("active",on);schedule()}
+document.querySelectorAll("[data-v]").forEach(function(b){b.onclick=function(){show(b.dataset.v)}});
+$("auto").onclick=function(){setAuto(!auto)};
+$("fs").onclick=function(){document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen()};
+schedule();
+function say(t){var h=$("heard");h.textContent=t;h.classList.add("show");clearTimeout(say.t);say.t=setTimeout(function(){h.classList.remove("show")},3500)}
+function tick(){var d=new Date();$("hora").textContent=d.toLocaleTimeString("pt-BR");$("data").textContent=d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"})}
+tick();setInterval(tick,1000);
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+if(!SR){$("mic").disabled=true}else{
+  var r=new SR();r.lang="pt-BR";
+  $("mic").onclick=function(){try{r.start();$("mic").classList.add("on");say("Ouvindo… mapa, municípios, atenção, ocorrências, geral, automático, parar")}catch(e){}};
+  r.onend=function(){$("mic").classList.remove("on")};
+  r.onresult=function(e){var t=e.results[0][0].transcript.toLowerCase();
+    if(/mapa/.test(t))show("mapa");else if(/munic/.test(t))show("municipios");else if(/ocorr/.test(t))show("ocorrencias");
+    else if(/offline|manuten|aten/.test(t))show("atencao");else if(/autom|rota/.test(t))setAuto(true);
+    else if(/par(ar|e)|pausa/.test(t))setAuto(false);else if(/geral|tudo|painel|início|inicio/.test(t))show("geral");
+    else{say("Não entendi: “"+t+"”");return}say("Comando: "+t)};
+}
+</script>
+</body>
+</html>

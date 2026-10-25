@@ -1,0 +1,14 @@
+{
+  "name": "vigia-mais-mt",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Sistema de exibição/monitoramento Vigia Mais MT (full stack)",
+  "workspaces": ["backend", "frontend"],
+  "scripts": {
+    "dev:backend": "npm --workspace backend run dev",
+    "dev:frontend": "npm --workspace frontend run dev",
+    "build:frontend": "npm --workspace frontend run build",
+    "seed": "npm --workspace backend run seed",
+    "start": "npm --workspace backend run start"
+  }
+}

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vigia Mais MT – App</title>
+<style>
+:root{--bg:#070d19;--bg2:#0e1829;--card:#14213a;--line:rgba(120,160,220,.16);--tx:#eaf1fb;--mut:#8ea3c4;--on:#22d17a;--off:#ff4d5e;--man:#ffb020;--acc:#3ab8ff;--glow:rgba(58,184,255,.16);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#e9eff7;--bg2:#f6f9fd;--card:#fff;--line:rgba(30,60,110,.13);--tx:#0e1a2e;--mut:#51637f;--acc:#0a74c2;--glow:rgba(10,116,194,.12);--on:#12a35c;--off:#d92d40;--man:#d98a00}}
+:root[data-theme="dark"]{--bg:#070d19;--bg2:#0e1829;--card:#14213a;--line:rgba(120,160,220,.16);--tx:#eaf1fb;--mut:#8ea3c4;--acc:#3ab8ff;--glow:rgba(58,184,255,.16)}
+:root[data-theme="light"]{--bg:#e9eff7;--bg2:#f6f9fd;--card:#fff;--line:rgba(30,60,110,.13);--tx:#0e1a2e;--mut:#51637f;--acc:#0a74c2;--glow:rgba(10,116,194,.12)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg2);color:var(--tx);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;display:grid;place-items:center}
+.phone{position:relative;width:100%;height:100%;background:var(--bg);display:flex;flex-direction:column;overflow:hidden}
+@media(min-width:600px){.phone{width:390px;height:min(844px,94vh);border-radius:38px;border:8px solid #1c2740;box-shadow:0 20px 60px rgba(0,0,0,.45)}}
+.top{display:flex;align-items:center;gap:10px;padding:14px 16px 10px}
+.logo{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--acc),#6a5cff);display:grid;place-items:center;font-size:20px}
+.top h1{margin:0;font-size:17px;line-height:1.15}.top small{display:block;color:var(--mut);font-size:11px;font-weight:500}
+.bell{margin-left:auto;position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;width:40px;height:40px;font-size:18px;cursor:pointer}
+.bell b{position:absolute;top:-4px;right:-4px;background:var(--off);color:#fff;border-radius:9px;font-size:10px;padding:1px 6px;display:none}
+#screen{flex:1;overflow-y:auto;padding:4px 16px 16px}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.12em;color:var(--mut);margin:18px 0 8px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.hero b{font-size:40px;font-weight:800;display:block;line-height:1}.hero span{color:var(--mut);font-size:12px}
+.stack{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--line);margin:12px 0 4px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.chip{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--c);border-radius:14px;padding:10px;text-align:center;cursor:pointer}
+.chip b{font-size:22px;display:block;color:var(--c)}.chip span{font-size:11px;color:var(--mut)}
+.row{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.row:last-child{border:0}.row small{display:block;color:var(--mut);font-size:12px}
+.row .grow{flex:1;min-width:0}
+.led{width:11px;height:11px;border-radius:50%;background:var(--c);box-shadow:0 0 8px var(--c);flex:none}
+.pill{font-size:10px;font-weight:800;text-transform:uppercase;padding:3px 9px;border-radius:12px;color:#fff;background:var(--c)}
+input[type=text],input[type=search]{width:100%;background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font:inherit;outline:none}
+input:focus{border-color:var(--acc)}
+.filters{display:flex;gap:6px;margin:10px 0;overflow-x:auto}
+.f{white-space:nowrap;background:var(--card);border:1px solid var(--line);color:var(--tx);border-radius:18px;padding:7px 13px;font:inherit;font-size:13px;cursor:pointer}
+.f.on{background:var(--acc);border-color:var(--acc);color:#04182a;font-weight:700}
+.btn{width:100%;background:var(--acc);color:#04182a;border:0;border-radius:13px;padding:13px;font:inherit;font-weight:700;cursor:pointer;margin-top:8px}
+.btn.alt{background:var(--card);color:var(--tx);border:1px solid var(--line)}
+.btn.warn{background:var(--man);color:#2a1a00}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;font:inherit;color:var(--tx)}
+.tile.on{border-color:var(--acc);box-shadow:0 0 14px var(--glow);color:var(--acc)}
+.tile i{display:block;font-style:normal;font-size:22px;margin-bottom:4px}
+.tag{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;background:var(--acc);color:#04182a;padding:2px 8px;border-radius:10px}
+.occ p{margin:6px 0 0;color:var(--mut);font-size:13px;line-height:1.4}.occ b{display:block;margin-top:6px}
+.sw{display:flex;align-items:center;justify-content:space-between}
+.sw button{width:48px;height:28px;border-radius:15px;border:0;background:var(--line);position:relative;cursor:pointer}
+.sw button::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+.sw button.on{background:var(--on)}.sw button.on::after{left:23px}
+.tv{background:#000;border-radius:10px;aspect-ratio:16/9;display:grid;place-items:center;color:#fff;padding:10px;text-align:center;font-weight:700;border:2px solid var(--line);margin-top:10px}
+nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px))}
+nav button{background:none;border:0;color:var(--mut);font:inherit;font-size:10px;padding:4px;cursor:pointer}
+nav button i{display:block;font-style:normal;font-size:20px}
+nav button.on{color:var(--acc);font-weight:700}
+#sheet{position:absolute;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-end;z-index:20}
+#sheet.show{display:flex}
+#sheet .in{background:var(--bg);width:100%;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
+.cam{aspect-ratio:16/9;border-radius:12px;background:repeating-linear-gradient(45deg,#101a2c,#101a2c 10px,#0c1524 10px,#0c1524 20px);display:grid;place-items:center;color:var(--mut);font-size:12px;margin:12px 0}
+#toast{position:absolute;top:10px;left:12px;right:12px;background:var(--card);border:2px solid var(--c,var(--acc));border-radius:14px;padding:11px 14px;font-weight:600;font-size:13px;z-index:30;transform:translateY(-140%);transition:transform .4s}
+#toast.show{transform:none}
+#map{width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px}
+</style>
+</head>
+<body>
+<div class="phone">
+ <div id="toast"></div>
+ <div class="top"><div class="logo">📹</div><h1>Vigia Mais MT<small>Central de monitoramento · demo</small></h1><button class="bell" id="bell">🔔<b id="nb">0</b></button></div>
+ <div id="screen"></div>
+ <nav id="nav">
+  <button data-t="home" class="on"><i>🏠</i>Início</button>
+  <button data-t="cams"><i>📷</i>Câmeras</button>
+  <button data-t="map"><i>🗺️</i>Mapa</button>
+  <button data-t="occ"><i>🚨</i>Ocorrências</button>
+  <button data-t="ctrl"><i>📺</i>Painel</button>
+ </nav>
+ <div id="sheet"><div class="in" id="sin"></div></div>
+</div>
+<script>
+var M=[["Cuiabá",-56.15,-15.55,412,38,21],["Várzea Grande",-55.98,-15.72,268,24,14],["Rondonópolis",-54.64,-16.47,196,17,9],["Sinop",-55.5,-11.86,154,12,8],["Tangará da Serra",-57.49,-14.62,121,9,6],["Cáceres",-57.68,-16.07,98,11,5],["Sorriso",-55.71,-12.54,87,6,4],["Lucas do Rio Verde",-55.91,-13.05,79,5,3],["Primavera do Leste",-54.3,-15.55,72,7,4],["Barra do Garças",-52.26,-15.89,58,8,3]].map(function(a){return{n:a[0],lon:a[1],lat:a[2],on:a[3],off:a[4],man:a[5]}});
+var OUT=[[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-57,-8.2],[-55.8,-9],[-54.3,-9.9],[-52.5,-9.6],[-50.7,-9.2],[-50.2,-11],[-51,-12.6],[-51.8,-14],[-52.4,-15.6],[-53,-16.9],[-53.6,-17.8],[-55,-17.7],[-56.4,-17.4],[-57.6,-17.5],[-58.4,-16.3],[-60.2,-16.2],[-60,-15.1],[-61.4,-14.9]];
+var CAMS=[["0412","Praça Alencastro","Cuiabá","off","há 3 h"],["0391","Rodoviária","Cuiabá","man","volta amanhã"],["0455","Av. do CPA","Cuiabá","on","agora"],["0460","Parque Mãe Bonifácia","Cuiabá","on","agora"],["0877","Av. Júlio Campos","Várzea Grande","off","há 50 min"],["0880","Shopping Popular","Várzea Grande","on","agora"],["1203","Terminal Urbano","Rondonópolis","man","volta hoje 18h"],["1210","Av. Lions","Rondonópolis","on","agora"],["0654","Centro","Cáceres","off","há 1 dia"],["0702","Orla do Rio Paraguai","Cáceres","on","agora"],["1301","Av. dos Ingás","Sinop","on","agora"],["1355","Rodovia BR-163","Sorriso","on","agora"],["1402","Praça Central","Tangará da Serra","on","agora"],["1509","Av. Brasil","Lucas do Rio Verde","off","há 20 min"]].map(function(c){return{id:c[0],n:c[1],m:c[2],s:c[3],t:c[4]}});
+var O=[["Veículo recuperado","há 18 min","Cuiabá · CPA","Placa identificada por câmera de leitura; viatura interceptou em 12 min."],["Pessoa localizada","há 1 h","Várzea Grande","Imagens do trajeto ajudaram a localizar idoso desaparecido em 40 min."],["Prisão em flagrante","há 2 h","Rondonópolis","Furto filmado e transmitido à central em tempo real."],["Suspeito identificado","há 3 h","Sinop","Imagens usadas para identificar autor de roubo a comércio."],["Apoio a acidente","há 5 h","Cuiabá · Av. do CPA","Câmera confirmou a dinâmica e agilizou o socorro."]];
+var COL={on:"var(--on)",off:"var(--off)",man:"var(--man)"},LAB={on:"online",off:"offline",man:"manutenção"};
+var tab="home",filt="all",q="",sel=null,view="geral",auto=true,sent="Nenhum comando enviado ainda",banner="",unread=0,mun=null,alerts=[];
+function $(i){return document.getElementById(i)}
+function tot(){var o=0,f=0,m=0;M.forEach(function(x){o+=x.on;f+=x.off;m+=x.man});return{on:o,off:f,man:m,all:o+f+m}}
+function toast(t,c){var e=$("toast");e.textContent=t;e.style.setProperty("--c",COL[c]||"var(--acc)");e.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(function(){e.classList.remove("show")},3500)}
+function row(c){return '<div class="row" data-id="'+c.id+'"><i class="led" style="--c:'+COL[c.s]+'"></i><div class="grow"><b>Câm. '+c.id+' · '+c.n+'</b><small>'+c.m+' · '+c.t+'</small></div><span class="pill" style="--c:'+COL[c.s]+'">'+LAB[c.s]+'</span></div>'}
+function bind(){document.querySelectorAll("[data-id]").forEach(function(r){r.onclick=function(){openCam(r.dataset.id)}})}
+
+function home(){var t=tot(),p=(t.on/t.all*100).toFixed(1);
+ var al=CAMS.filter(function(c){return c.s!="on"}).slice(0,4);
+ return '<div class="card hero"><span>Disponibilidade da rede</span><b>'+p+'%</b><div class="stack"><i style="width:'+t.on/t.all*100+'%;background:var(--on)"></i><i style="width:'+t.off/t.all*100+'%;background:var(--off)"></i><i style="width:'+t.man/t.all*100+'%;background:var(--man)"></i></div><span>'+t.all+' câmeras em '+M.length+' municípios</span></div>'+
+ '<div class="chips">'+[["on","Online",t.on],["off","Offline",t.off],["man","Manutenção",t.man]].map(function(x){return '<div class="chip" data-f="'+x[0]+'" style="--c:'+COL[x[0]]+'"><b>'+x[2]+'</b><span>'+x[1]+'</span></div>'}).join("")+'</div>'+
+ '<h2>Precisam de atenção</h2><div class="card">'+al.map(row).join("")+'</div>'+
+ '<h2>Última ocorrência apoiada</h2><div class="card occ"><span class="tag">'+O[0][0]+'</span> <small style="color:var(--mut)">'+O[0][1]+'</small><b>'+O[0][2]+'</b><p>'+O[0][3]+'</p></div>'}
+function cams(){var l=CAMS.filter(function(c){return(filt=="all"||c.s==filt)&&(c.n+" "+c.m+" "+c.id).toLowerCase().indexOf(q.toLowerCase())>=0});
+ return '<input type="search" id="q" placeholder="Buscar câmera, rua ou município" value="'+q+'"><div class="filters">'+[["all","Todas"],["on","Online"],["off","Offline"],["man","Manutenção"]].map(function(f){return '<button class="f'+(filt==f[0]?' on':'')+'" data-f="'+f[0]+'">'+f[1]+'</button>'}).join("")+'</div><div class="card">'+(l.map(row).join("")||'<small style="color:var(--mut)">Nenhuma câmera encontrada</small>')+'</div><small style="color:var(--mut)">Amostra de demonstração</small>'}
+function map(){var px=function(a){return((a+61.8)*10).toFixed(1)},py=function(a){return((-7.2-a)*10).toFixed(1)};
+ var s='<polygon points="'+OUT.map(function(p){return px(p[0])+","+py(p[1])}).join(" ")+'" fill="var(--glow)" stroke="var(--acc)" stroke-width=".6"/>';
+ M.forEach(function(m){var t=m.on+m.off+m.man,a=m.on/t*100,c=a>=90?COL.on:a>=86?COL.man:COL.off;
+  s+='<circle data-m="'+m.n+'" cx="'+px(m.lon)+'" cy="'+py(m.lat)+'" r="'+(2.4+Math.sqrt(t)/8)+'" fill="'+c+'" fill-opacity=".85" stroke="'+(mun==m.n?'var(--tx)':'var(--bg)')+'" stroke-width="'+(mun==m.n?1:.5)+'" style="cursor:pointer"/>'});
+ var d="";if(mun){var m=M.filter(function(x){return x.n==mun})[0],t=m.on+m.off+m.man;
+  d='<div class="card"><b>'+m.n+'</b> <small style="color:var(--mut)">'+t+' câmeras</small><div class="chips" style="margin-top:10px"><div class="chip" style="--c:var(--on)"><b>'+m.on+'</b><span>Online</span></div><div class="chip" style="--c:var(--off)"><b>'+m.off+'</b><span>Offline</span></div><div class="chip" style="--c:var(--man)"><b>'+m.man+'</b><span>Manutenção</span></div></div></div>'}
+ else d='<div class="card"><small style="color:var(--mut)">Toque em um município para ver os detalhes.</small></div>';
+ return '<svg id="map" viewBox="0 0 118 107">'+s+'</svg><div style="height:10px"></div>'+d}
+function occ(){return O.map(function(o){return '<div class="card occ"><span class="tag">'+o[0]+'</span> <small style="color:var(--mut);float:right">'+o[1]+'</small><b>'+o[2]+'</b><p>'+o[3]+'</p></div>'}).join("")}
+function ctrl(){var V=[["geral","🧭","Geral"],["mapa","🗺️","Mapa"],["municipios","🏙️","Municípios"],["atencao","⚠️","Atenção"],["ocorrencias","🚨","Ocorrências"]];
+ return '<div class="card"><div class="sw"><div><b>Painel da Central · Sala 1</b><small style="color:var(--mut);display:block">● Conectado (simulado)</small></div></div></div>'+
+ '<h2>Foco do painel</h2><div class="grid2">'+V.map(function(v){return '<button class="tile'+(view==v[0]?' on':'')+'" data-view="'+v[0]+'"><i>'+v[1]+'</i>'+v[2]+'</button>'}).join("")+'<button class="tile" id="mic"><i>🎤</i>Comando de voz</button></div>'+
+ '<div class="card sw" style="margin-top:10px"><div><b>Rotação automática</b><small style="color:var(--mut);display:block">Troca o foco a cada 15 s</small></div><button id="au" class="'+(auto?'on':'')+'"></button></div>'+
+ '<h2>Mensagem no telão</h2><input type="text" id="msg" placeholder="Ex.: Reunião às 15h na sala 2" value="'+banner+'"><button class="btn" id="send">Enviar ao painel</button>'+
+ (banner?'<div class="tv">'+banner+'</div>':'')+
+ '<h2>Último comando</h2><div class="card"><small style="color:var(--mut)">'+sent+'</small></div>'}
+
+function render(){var s=$("screen");s.innerHTML={home:home,cams:cams,map:map,occ:occ,ctrl:ctrl}[tab]();
+ document.querySelectorAll("#nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t==tab)});
+ bind();
+ document.querySelectorAll(".chip[data-f],.f[data-f]").forEach(function(b){b.onclick=function(){filt=b.dataset.f;go("cams")}});
+ var qi=$("q");if(qi){qi.oninput=function(){q=qi.value;var p=qi.selectionStart;render();var n=$("q");n.focus();n.setSelectionRange(p,p)}}
+ document.querySelectorAll("[data-m]").forEach(function(c){c.onclick=function(){mun=c.dataset.m;render()}});
+ document.querySelectorAll("[data-view]").forEach(function(b){b.onclick=function(){cmd(b.dataset.view)}});
+ if($("au"))$("au").onclick=function(){auto=!auto;sent=(auto?"Rotação automática ligada":"Rotação automática desligada")+" · "+hh();render()};
+ if($("send"))$("send").onclick=function(){banner=$("msg").value.trim();sent=banner?"Mensagem enviada: “"+banner+"” · "+hh():"Mensagem removida do telão · "+hh();toast("📺 Enviado ao painel","on");render()};
+ if($("mic"))$("mic").onclick=voice}
+function hh(){return new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})}
+function cmd(v){view=v;auto=false;sent="Foco do painel: "+v+" · "+hh();toast("📺 Painel alterado para "+v,"on");render()}
+function go(t){tab=t;render();$("screen").scrollTop=0}
+document.querySelectorAll("#nav button").forEach(function(b){b.onclick=function(){go(b.dataset.t)}});
+$("bell").onclick=function(){unread=0;$("nb").style.display="none";go("cams");filt="off";render()};
+
+function openCam(id){sel=CAMS.filter(function(c){return c.id==id})[0];var c=sel;
+ $("sin").innerHTML='<div class="row" style="cursor:default;border:0"><i class="led" style="--c:'+COL[c.s]+'"></i><div class="grow"><b>Câm. '+c.id+' · '+c.n+'</b><small>'+c.m+' · '+LAB[c.s]+' · '+c.t+'</small></div></div><div class="cam">'+(c.s=="on"?"▶ Transmissão ao vivo (simulada)":"Sem sinal")+'</div>'+
+ (c.s=="on"?'<button class="btn" id="live">▶ Ver ao vivo</button><button class="btn alt" id="tomaint">🛠 Enviar para manutenção</button>':c.s=="off"?'<button class="btn warn" id="tomaint">🛠 Abrir chamado de manutenção</button>':'<button class="btn" id="back">✔ Marcar como restabelecida</button>')+'<button class="btn alt" id="close">Fechar</button>';
+ $("sheet").classList.add("show");
+ $("close").onclick=closeS;
+ if($("live"))$("live").onclick=function(){toast("▶ Abrindo transmissão (demo)")};
+ if($("tomaint"))$("tomaint").onclick=function(){c.s="man";c.t="chamado aberto";closeS();toast("🛠 Chamado de manutenção aberto","man");render()};
+ if($("back"))$("back").onclick=function(){c.s="on";c.t="agora";closeS();toast("✔ Câmera restabelecida","on");render()}}
+function closeS(){$("sheet").classList.remove("show")}
+$("sheet").onclick=function(e){if(e.target==this)closeS()};
+
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+function voice(){if(!SR){toast("Use Chrome ou Safari recente para voz");return}
+ var r=new SR();r.lang="pt-BR";toast("🎤 Ouvindo… diga: mapa, municípios, atenção…");
+ r.onresult=function(e){var t=e.results[0][0].transcript.toLowerCase();
+  if(/mapa/.test(t))cmd("mapa");else if(/munic/.test(t))cmd("municipios");else if(/ocorr/.test(t))cmd("ocorrencias");
+  else if(/aten|offline|manuten/.test(t))cmd("atencao");else if(/geral|tudo|painel/.test(t))cmd("geral");
+  else toast("Não entendi: “"+t+"”")};r.start()}
+
+setInterval(function(){var l=CAMS.filter(function(c){return c.s=="on"});if(!l.length)return;var c=l[Math.floor(Math.random()*l.length)];
+ c.s="off";c.t="agora";unread++;$("nb").textContent=unread;$("nb").style.display="block";
+ toast("⚠ Câmera "+c.id+" offline · "+c.m,"off");if(tab=="home"||tab=="cams")render()},15000);
+render();
+</script>
+</body>
+</html>

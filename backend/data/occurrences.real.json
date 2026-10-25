@@ -1,0 +1,72 @@
+[
+  {
+    "tipo": "Prisão em flagrante",
+    "quando": "02/01/2026",
+    "local": "Sorriso",
+    "descricao": "Operação policial desencadeada a partir de imagens de câmeras do Vigia Mais MT prendeu seis suspeitos de homicídio e desmonte de central de tráfico.",
+    "municipio": "Sorriso"
+  },
+  {
+    "tipo": "Suspeito identificado",
+    "quando": "26/01/2026",
+    "local": "Cuiabá",
+    "descricao": "Dois foragidos da Justiça foram presos com apoio de imagens de câmeras do sistema de videomonitoramento do Vigia Mais MT.",
+    "municipio": "Cuiabá"
+  },
+  {
+    "tipo": "Pessoa localizada",
+    "quando": "15/02/2026",
+    "local": "Cuiabá · Rodoviária",
+    "descricao": "Mulher com mandado de prisão em aberto foi localizada na rodoviária com auxílio das câmeras do Vigia Mais MT.",
+    "municipio": "Cuiabá"
+  },
+  {
+    "tipo": "Prisão em flagrante",
+    "quando": "10/03/2026",
+    "local": "Alto Paraguai",
+    "descricao": "Imagens de câmeras do Vigia Mais MT levaram à prisão de suspeito de envolvimento em homicídio.",
+    "municipio": null
+  },
+  {
+    "tipo": "Suspeito identificado",
+    "quando": "05/04/2026",
+    "local": "Cuiabá",
+    "descricao": "Câmera do Vigia Mais MT ajudou a prender aliciador de menor, identificado pelo monitoramento.",
+    "municipio": "Cuiabá"
+  },
+  {
+    "tipo": "Veículo recuperado",
+    "quando": "06/06/2026",
+    "local": "Mato Grosso",
+    "descricao": "Programa Vigia Mais MT auxiliou na recuperação de 86 veículos, devolvendo cerca de R$ 4 milhões aos proprietários.",
+    "municipio": null
+  },
+  {
+    "tipo": "Prisão em flagrante",
+    "quando": "12/07/2026",
+    "local": "Várzea Grande",
+    "descricao": "Suspeitos de homicídio e desmonte de central de tráfico presos a partir de imagens de câmeras do Vigia Mais MT.",
+    "municipio": "Várzea Grande"
+  },
+  {
+    "tipo": "Apoio a acidente",
+    "quando": "20/08/2026",
+    "local": "Rondonópolis",
+    "descricao": "Câmera confirmou dinâmica de acidente e agilizou o socorro, com apoio do Vigia Mais MT.",
+    "municipio": "Rondonópolis"
+  },
+  {
+    "tipo": "Prisão em flagrante",
+    "quando": "18/10/2026",
+    "local": "Mato Grosso",
+    "descricao": "PM prendeu homem por danificar câmera do programa Vigia Mais MT.",
+    "municipio": null
+  },
+  {
+    "tipo": "Veículo recuperado",
+    "quando": "22/10/2026",
+    "local": "Cuiabá · CPA",
+    "descricao": "Placa identificada por câmera de leitura do Vigia Mais MT; viatura interceptou em 12 min.",
+    "municipio": "Cuiabá"
+  }
+]
