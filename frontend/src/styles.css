@@ -78,7 +78,20 @@ h2 em{font-style:normal;color:var(--acc)}
 #alert{position:fixed;top:1.4vh;left:50%;transform:translate(-50%,-220%);background:var(--card);border:2px solid var(--c,var(--acc));border-radius:2vh;padding:1vh 2vw;font-size:2vh;font-weight:700;z-index:9;backdrop-filter:blur(10px);transition:transform .5s;display:flex;align-items:center;gap:.7vw}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin 1.4s linear infinite}
-.live-icon{animation:p 1.8s infinite}
+.live-icon{animation:ico-blink 1.6s ease-in-out infinite}
+@keyframes ico-blink{0%,100%{opacity:1}50%{opacity:.25}}
+nav button .nav-ico{transition:transform .25s ease}
+nav button:hover .nav-ico{animation:ico-wiggle .6s ease}
+nav button.active .nav-ico{animation:ico-pop .5s ease both}
+@keyframes ico-wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}75%{transform:rotate(12deg)}}
+@keyframes ico-pop{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+.ico-alert{animation:ico-shake 1.8s ease-in-out infinite;transform-origin:50% 20%}
+@keyframes ico-shake{0%,70%,100%{transform:rotate(0)}75%{transform:rotate(-10deg)}80%{transform:rotate(10deg)}85%{transform:rotate(-6deg)}90%{transform:rotate(6deg)}}
+.ico-siren{animation:ico-siren 1s ease-in-out infinite}
+@keyframes ico-siren{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.25);opacity:.55}}
+.ico-pop{animation:ico-pop .5s ease both}
+#mic:hover .ico-mic{animation:ico-wiggle .6s ease}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 #alert.show{transform:translate(-50%,0)}
 #heard{position:fixed;left:50%;bottom:1.2vh;transform:translateX(-50%);background:var(--card);border:1px solid var(--line);border-radius:3vh;padding:.7vh 1.4vw;font-size:1.3vh;color:var(--mut);opacity:0;transition:opacity .3s;pointer-events:none}
 #heard.show{opacity:1}

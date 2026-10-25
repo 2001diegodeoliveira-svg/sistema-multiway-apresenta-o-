@@ -229,9 +229,9 @@ export default function App() {
       <div id="prog" ref={progRef} />
       {alertMsg && (
         <div id="alert" className="show" style={{ "--c": alertMsg.color } as any}>
-          {alertMsg.kind === "warn" && <AlertTriangle size={20} strokeWidth={2.4} />}
-          {alertMsg.kind === "ok" && <CheckCircle2 size={20} strokeWidth={2.4} />}
-          {alertMsg.kind === "alert" && <Siren size={20} strokeWidth={2.4} />}
+          {alertMsg.kind === "warn" && <AlertTriangle size={20} strokeWidth={2.4} className="ico-alert" />}
+          {alertMsg.kind === "ok" && <CheckCircle2 size={20} strokeWidth={2.4} className="ico-pop" />}
+          {alertMsg.kind === "alert" && <Siren size={20} strokeWidth={2.4} className="ico-siren" />}
           <span>{alertMsg.text}</span>
         </div>
       )}
@@ -257,7 +257,11 @@ export default function App() {
               className={cur === v ? "active" : ""}
               onClick={() => show(v)}
             >
-              <Icon size={15} strokeWidth={2.2} />
+              <Icon
+                size={15}
+                strokeWidth={2.2}
+                className={v === "atencao" && attention.length > 0 ? "ico-alert" : "nav-ico"}
+              />
               <span>{label}</span>
             </button>
           ))}
@@ -266,7 +270,7 @@ export default function App() {
             <span>Auto</span>
           </button>
           <button id="mic">
-            <Mic size={15} strokeWidth={2.2} />
+            <Mic size={15} strokeWidth={2.2} className="ico-mic" />
           </button>
           <button id="fs" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}>
             {document.fullscreenElement ? <Minimize size={15} strokeWidth={2.2} /> : <Maximize size={15} strokeWidth={2.2} />}
@@ -438,7 +442,7 @@ export default function App() {
             <h2>Precisam de atenção <em>{attention.length} {attention.length === 1 ? "câmera" : "câmeras"}</em></h2>
             <div className="atts" id="atts">
               {attention.length === 0 && (
-                <div className="att-empty"><CheckCircle2 size={18} strokeWidth={2.2} /> Todas as câmeras estão online</div>
+                <div className="att-empty"><CheckCircle2 size={18} strokeWidth={2.2} className="ico-pop" /> Todas as câmeras estão online</div>
               )}
               {attention.slice(0, 8).map((c) => {
                 const off = c.status === "off";
