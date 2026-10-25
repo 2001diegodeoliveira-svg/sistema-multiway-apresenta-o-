@@ -225,9 +225,7 @@ export default function App() {
         <div className="logo logo-img">
           <img src="/logo-vigia.png" alt="Vigia Mais MT" />
         </div>
-        <h1>
-          Vigia Mais MT<small>Central de monitoramento · demonstração simulada</small>
-        </h1>
+        <h1>Vigia Mais MT</h1>
         <div className="live">
           <Radio size={14} strokeWidth={2.5} className="live-icon" /> AO VIVO
         </div>
