@@ -1,15 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
+import CamerasView from "./components/CamerasView";
 import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
 import {
-  LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText,
+  LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
   RefreshCw, Mic, Maximize, Minimize, Radio, Camera, CheckCircle2, Siren,
 } from "lucide-react";
 
 const OUT = [[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-57,-8.2],[-55.8,-9],[-54.3,-9.9],[-52.5,-9.6],[-50.7,-9.2],[-50.2,-11],[-51,-12.6],[-51.8,-14],[-52.4,-15.6],[-53,-16.9],[-53.6,-17.8],[-55,-17.7],[-56.4,-17.4],[-57.6,-17.5],[-58.4,-16.3],[-60.2,-16.2],[-60,-15.1],[-61.4,-14.9]];
 
-const SEQ = ["geral", "mapa", "municipios", "atencao", "ocorrencias"];
+const SEQ = ["geral", "mapa", "municipios", "atencao", "ocorrencias", "cameras"];
 
 const STATUS_RANK: Record<string, number> = { off: 0, man: 1 };
 
@@ -250,6 +251,7 @@ export default function App() {
             ["municipios", "Municípios", Building2],
             ["atencao", "Atenção", AlertTriangle],
             ["ocorrencias", "Ocorrências", FileText],
+            ["cameras", "Câmeras", Video],
           ] as const).map(([v, label, Icon]) => (
             <button
               key={v}
@@ -300,7 +302,7 @@ export default function App() {
         ))}
       </section>
 
-      <main id="main" data-f={cur === "geral" ? undefined : cur}>
+      <main id="main" data-f={cur === "geral" ? undefined : cur} hidden={cur === "cameras"}>
         <div className="col">
           <div className="card" id="c-mun">
             <h2>
@@ -478,6 +480,7 @@ export default function App() {
         </div>
       </main>
 
+      {cur === "cameras" && <CamerasView />}
       {heard && <div id="heard" className="show">{heard}</div>}
     </div>
   );

@@ -5,6 +5,7 @@ const occurrences = require("../controllers/occurrences.controller");
 const alerts = require("../controllers/alerts.controller");
 const auth = require("../controllers/auth.controller");
 const ibge = require("../controllers/ibge.controller");
+const sinfra = require("../controllers/sinfra.controller");
 const { auth: authMw } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -33,6 +34,9 @@ router.delete("/occurrences/:id", authMw, occurrences.remove);
 router.get("/alerts", alerts.list);
 
 router.post("/ibge/cache/clear", ibge.clearCache);
+
+// Câmeras SINFRA (Obras ao Vivo)
+router.get("/sinfra/cameras", sinfra.list);
 router.post("/occurrences/sync", authMw, occurrences.sync);
 
 // IBGE (proxy + cache)
