@@ -262,6 +262,9 @@ export default function App() {
           <b>{now.toLocaleTimeString("pt-BR")}</b>
           <span>{now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</span>
         </div>
+        <div className="logo-multiway">
+          <img src="/logo-multiway.png" alt="MultiWay" />
+        </div>
       </header>
 
       <section className="kpis" id="kpis">
