@@ -16,8 +16,11 @@ async function loadSource(source) {
   return JSON.parse(raw);
 }
 
+const DEFAULT_SOURCE = path.resolve(__dirname, "..", "..", "data", "occurrences.real.json");
+
 async function sync(source) {
-  const data = await loadSource(source);
+  const src = source || DEFAULT_SOURCE;
+  const data = await loadSource(src);
   if (!Array.isArray(data)) throw new Error("Fonte deve ser um array JSON de ocorrências");
   const db = require("../db/connection").getDb();
   db.exec("BEGIN");
@@ -49,7 +52,7 @@ async function sync(source) {
 }
 
 function startAutoSync() {
-  const source = process.env.OCCURRENCES_SOURCE || "./data/occurrences.real.json";
+  const source = process.env.OCCURRENCES_SOURCE || DEFAULT_SOURCE;
   const interval = Number(process.env.OCCURRENCES_SYNC_INTERVAL_MS || 0);
   const enabled = process.env.OCCURRENCES_AUTO_SYNC !== "false";
   if (!enabled) return;

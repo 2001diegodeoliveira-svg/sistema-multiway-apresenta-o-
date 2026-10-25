@@ -38,7 +38,7 @@ const remove = (req, res, next) => {
 
 const sync = async (req, res, next) => {
   try {
-    const source = req.body?.source || process.env.OCCURRENCES_SOURCE || "./data/occurrences.real.json";
+    const source = req.body?.source || process.env.OCCURRENCES_SOURCE || require("path").resolve(__dirname, "..", "..", "data", "occurrences.real.json");
     const list = await syncService.sync(source);
     res.json({ synced: list.length, occurrences: list });
   } catch (e) {
