@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, MapPin, RefreshCw, Video, VideoOff, X } from "lucide-react";
+import { ExternalLink, LayoutGrid, List, Maximize2, MapPin, RefreshCw, Video, VideoOff, X } from "lucide-react";
 
 export interface SinfraCamera {
   id: number | string | null;
@@ -26,6 +26,7 @@ interface SinfraResponse {
 }
 
 type Filter = "all" | "online" | "offline";
+type View = "mosaic" | "list";
 
 const REFRESH_MS = 2 * 60 * 1000;
 
@@ -34,6 +35,7 @@ export default function CamerasView() {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState<Filter>("all");
+  const [view, setView] = useState<View>("mosaic");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<SinfraCamera | null>(null);
 
@@ -71,6 +73,8 @@ export default function CamerasView() {
     });
   }, [data, filter, query]);
 
+  const mosaic = useMemo(() => visible.filter((c) => c.online), [visible]);
+
   return (
     <section className="cams-view">
       <div className="cams-head">
@@ -104,6 +108,14 @@ export default function CamerasView() {
               </button>
             ))}
           </div>
+          <div className="cams-filter">
+            <button className={view === "mosaic" ? "active" : ""} onClick={() => setView("mosaic")} title="Mosaico">
+              <LayoutGrid size={14} strokeWidth={2.2} /> Mosaico
+            </button>
+            <button className={view === "list" ? "active" : ""} onClick={() => setView("list")} title="Lista">
+              <List size={14} strokeWidth={2.2} /> Lista
+            </button>
+          </div>
           <button className="cams-refresh" onClick={() => load(true)} disabled={loading} title="Atualizar">
             <RefreshCw size={15} strokeWidth={2.2} className={loading ? "spin" : ""} />
           </button>
@@ -112,25 +124,50 @@ export default function CamerasView() {
 
       {error && !data && <div className="cams-empty">Não foi possível carregar as câmeras agora.</div>}
 
-      <div className="cams-grid">
-        {visible.map((c) => (
-          <button key={c.slug} className={`cam-card ${c.online ? "is-on" : "is-off"}`} onClick={() => setSelected(c)}>
-            <div className="cam-card-top">
-              <span className="cam-status">
-                {c.online ? <Video size={14} strokeWidth={2.4} /> : <VideoOff size={14} strokeWidth={2.4} />}
-                {c.online ? "AO VIVO" : "OFFLINE"}
-              </span>
-              {c.placa != null && <span className="cam-placa">Placa {c.placa}</span>}
+      {view === "mosaic" ? (
+        <div className="mosaic">
+          {mosaic.map((c) => (
+            <div className="mosaic-tile" key={c.slug}>
+              <iframe src={c.link} title={c.localizacao || c.slug} loading="lazy" allow="autoplay; fullscreen" />
+              <div className="mosaic-label">
+                <span className="cam-status">
+                  <Video size={12} strokeWidth={2.4} /> AO VIVO
+                </span>
+                <div className="mosaic-text">
+                  <b>{c.localizacao || c.slug}</b>
+                  <small>{c.municipio}</small>
+                </div>
+                <button onClick={() => setSelected(c)} title="Ampliar">
+                  <Maximize2 size={14} strokeWidth={2.2} />
+                </button>
+              </div>
             </div>
-            <b>{c.localizacao || c.slug}</b>
-            <small className="cam-muni">
-              <MapPin size={12} strokeWidth={2.2} /> {c.municipio || "MT"}
-            </small>
-            {c.obra && <small className="cam-obra">{c.obra}</small>}
-          </button>
-        ))}
-        {data && visible.length === 0 && <div className="cams-empty">Nenhuma câmera encontrada com esse filtro.</div>}
-      </div>
+          ))}
+          {data && mosaic.length === 0 && (
+            <div className="cams-empty">Nenhuma câmera ao vivo com esse filtro.</div>
+          )}
+        </div>
+      ) : (
+        <div className="cams-grid">
+          {visible.map((c) => (
+            <button key={c.slug} className={`cam-card ${c.online ? "is-on" : "is-off"}`} onClick={() => setSelected(c)}>
+              <div className="cam-card-top">
+                <span className="cam-status">
+                  {c.online ? <Video size={14} strokeWidth={2.4} /> : <VideoOff size={14} strokeWidth={2.4} />}
+                  {c.online ? "AO VIVO" : "OFFLINE"}
+                </span>
+                {c.placa != null && <span className="cam-placa">Placa {c.placa}</span>}
+              </div>
+              <b>{c.localizacao || c.slug}</b>
+              <small className="cam-muni">
+                <MapPin size={12} strokeWidth={2.2} /> {c.municipio || "MT"}
+              </small>
+              {c.obra && <small className="cam-obra">{c.obra}</small>}
+            </button>
+          ))}
+          {data && visible.length === 0 && <div className="cams-empty">Nenhuma câmera encontrada com esse filtro.</div>}
+        </div>
+      )}
 
       {selected && (
         <div className="cam-modal" onClick={() => setSelected(null)}>
