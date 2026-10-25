@@ -8,10 +8,10 @@ body{background:radial-gradient(1200px 700px at 15% -10%,var(--glow),transparent
 .app{height:100%;display:grid;grid-template-rows:auto auto 1fr;gap:1.4vh;padding:1.6vh 1.4vw}
 #prog{position:fixed;top:0;left:0;height:.45vh;width:100%;background:var(--acc);transform-origin:left;transform:scaleX(0);z-index:5}
 @keyframes prog{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-header{display:flex;align-items:center;gap:1vw}
+header{display:flex;align-items:center;gap:1vw;position:relative}
 .logo{width:5.2vh;height:5.2vh;border-radius:1.3vh;display:grid;place-items:center;overflow:hidden}
 .logo-img img{width:100%;height:100%;object-fit:contain}
-.logo-multiway{height:3.2vh;display:grid;place-items:center;margin-left:1vw;opacity:.9}
+.logo-multiway{position:absolute;top:.6vh;right:.6vw;height:2.4vh;display:grid;place-items:center;opacity:.85;z-index:3}
 .logo-multiway img{height:100%;width:auto;object-fit:contain}
 h1{margin:0;font-size:2.6vh;line-height:1.1}
 h1 small{display:block;font-size:1.2vh;color:var(--mut);font-weight:500;letter-spacing:.1em;text-transform:uppercase;margin-top:.3vh}
