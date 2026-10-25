@@ -58,7 +58,13 @@ h2 em{font-style:normal;color:var(--acc)}
 #map text{font-size:3.1px;fill:var(--tx);font-weight:600;paint-order:stroke;stroke:var(--bg);stroke-width:.7px}
 #map .ping{fill:none;stroke-width:.5;animation:rp 1.2s infinite;transform-box:fill-box;transform-origin:center}
 @keyframes rp{from{transform:scale(1);opacity:1}to{transform:scale(2.6);opacity:0}}
-.atts{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:space-between}
+.atts{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start;overflow:auto}
+.cam-info{min-width:0}
+.cam-info b{display:block;font-weight:700}
+.cam-info small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.att-empty{display:flex;align-items:center;gap:.6vw;color:var(--on);font-weight:700;padding:1vh 0}
+.cam{gap:.8vw}
+.cam .pill{flex:none}
 .cam{display:flex;justify-content:space-between;align-items:center;gap:.6vw;padding:.5vh 0;border-bottom:1px solid var(--line);font-size:1.4vh}
 .cam:last-child{border:0}.cam small{display:block;color:var(--mut);font-size:1.1vh}
 .pill{font-size:1.05vh;padding:.35vh .7vw;border-radius:2vh;font-weight:800;text-transform:uppercase;color:#fff;white-space:nowrap}

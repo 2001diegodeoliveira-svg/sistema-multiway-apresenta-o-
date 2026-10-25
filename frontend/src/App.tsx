@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
-import type { Municipio, Kpis, Occurrence, Alert } from "./types";
+import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText,
   RefreshCw, Mic, Maximize, Minimize, Radio, Camera, CheckCircle2, Siren,
@@ -10,6 +10,14 @@ import {
 const OUT = [[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-57,-8.2],[-55.8,-9],[-54.3,-9.9],[-52.5,-9.6],[-50.7,-9.2],[-50.2,-11],[-51,-12.6],[-51.8,-14],[-52.4,-15.6],[-53,-16.9],[-53.6,-17.8],[-55,-17.7],[-56.4,-17.4],[-57.6,-17.5],[-58.4,-16.3],[-60.2,-16.2],[-60,-15.1],[-61.4,-14.9]];
 
 const SEQ = ["geral", "mapa", "municipios", "atencao", "ocorrencias"];
+
+const STATUS_RANK: Record<string, number> = { off: 0, man: 1 };
+
+function sortAttention(list: CamInfo[]): CamInfo[] {
+  return list
+    .filter((c) => c.status !== "on")
+    .sort((a, b) => (STATUS_RANK[a.status] ?? 9) - (STATUS_RANK[b.status] ?? 9) || a.municipio.localeCompare(b.municipio));
+}
 
 const px = (lo: number) => ((lo + 61.8) * 10).toFixed(1);
 const py = (la: number) => ((-7.2 - la) * 10).toFixed(1);
@@ -47,6 +55,7 @@ export default function App() {
   const [kpis, setKpis] = useState<Kpis | null>(null);
   const [occurrences, setOccurrences] = useState<Occurrence[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [attention, setAttention] = useState<CamInfo[]>([]);
   const [ping, setPing] = useState<string | null>(null);
   const [cur, setCur] = useState("geral");
   const [outlinePath, setOutlinePath] = useState<string>("");
@@ -73,16 +82,18 @@ export default function App() {
   }, []);
 
   const loadAll = useCallback(async () => {
-    const [m, k, o, a] = await Promise.all([
+    const [m, k, o, a, c] = await Promise.all([
       api.municipios(),
       api.kpis(),
       api.occurrences(6),
       api.alerts(6),
+      api.cameras(),
     ]);
     setMunicipios(m);
     setKpis(k);
     setOccurrences(o);
     setAlerts(a);
+    setAttention(sortAttention(c));
   }, []);
 
   useEffect(() => {
@@ -140,6 +151,9 @@ export default function App() {
       );
       setPing(p.municipio.nome);
       window.setTimeout(() => setPing(null), 4000);
+      setAttention((prev) =>
+        sortAttention([...prev.filter((c) => c.id !== p.camera.id), p.camera])
+      );
     },
     "occurrence:new": (occ: Occurrence) => {
       setOccurrences((prev) => [occ, ...prev].slice(0, 6));
@@ -421,19 +435,24 @@ export default function App() {
             </div>
           </div>
           <div className="card" id="c-att">
-            <h2>Precisam de atenção <em>5 mais recentes</em></h2>
+            <h2>Precisam de atenção <em>{attention.length} {attention.length === 1 ? "câmera" : "câmeras"}</em></h2>
             <div className="atts" id="atts">
-              {alerts.slice(0, 5).map((a) => (
-                <div className="cam" key={a.id}>
-                  <div>
-                    {a.mensagem}
-                    <small>{a.municipio ? `${a.municipio} · agora` : ""}</small>
+              {attention.length === 0 && (
+                <div className="att-empty"><CheckCircle2 size={18} strokeWidth={2.2} /> Todas as câmeras estão online</div>
+              )}
+              {attention.slice(0, 8).map((c) => {
+                const off = c.status === "off";
+                const col = off ? C.off : C.man;
+                return (
+                  <div className="cam" key={c.id}>
+                    <div className="cam-info">
+                      <b>Câm. {c.id} · {c.nome}</b>
+                      <small>{c.municipio} · {c.detalhe}</small>
+                    </div>
+                    <span className="pill" style={{ background: col }}>{off ? "offline" : "manutenção"}</span>
                   </div>
-                  <span className="pill" style={{ background: a.tipo === "offline" ? C.off : C.man }}>
-                    {a.tipo === "offline" ? "offline" : a.tipo === "manutencao" ? "manutenção" : a.tipo}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
