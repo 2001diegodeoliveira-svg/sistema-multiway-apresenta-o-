@@ -257,13 +257,13 @@ export default function App() {
           <button id="fs" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen())}>
             {document.fullscreenElement ? <Minimize size={15} strokeWidth={2.2} /> : <Maximize size={15} strokeWidth={2.2} />}
           </button>
+          <div className="logo-multiway">
+            <img src="/logo-multiway.png" alt="MultiWay" />
+          </div>
         </nav>
         <div className="clock">
           <b>{now.toLocaleTimeString("pt-BR")}</b>
           <span>{now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}</span>
-        </div>
-        <div className="logo-multiway">
-          <img src="/logo-multiway.png" alt="MultiWay" />
         </div>
       </header>
 
