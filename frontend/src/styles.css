@@ -117,6 +117,13 @@ main[hidden]{display:none}
 .cam-modal-head button{padding:.6vh .6vw;display:grid;place-items:center}
 .cam-modal iframe{width:100%;aspect-ratio:16/9;border:0;border-radius:1vh;background:#000}
 .cam-open{display:inline-flex;align-items:center;gap:.4vw;color:var(--acc);font-size:1.3vh;text-decoration:none;font-weight:700;align-self:flex-start}
+.muns-list{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}
+.mun-row{display:flex;justify-content:space-between;align-items:center;gap:.6vw;font-size:1.3vh;padding:.45vh .2vw;border-bottom:1px solid var(--line)}
+.mun-row span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mun-row small{font-weight:700;white-space:nowrap;font-size:1.1vh}
+.mun-row.aderido small{color:var(--on)}
+.mun-row.adesao small{color:var(--man)}
+.mun-row.nao small{color:var(--off)}
 .live-icon{animation:ico-blink 1.6s ease-in-out infinite}
 @keyframes ico-blink{0%,100%{opacity:1}50%{opacity:.25}}
 nav button .nav-ico{transition:transform .25s ease}

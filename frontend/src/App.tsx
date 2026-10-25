@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
 import CamerasView from "./components/CamerasView";
-import { isVigiaAderido } from "./data/vigiaMais";
+import { EM_ADESAO, NAO_ADERIRAM, isVigiaAderido } from "./data/vigiaMais";
 import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
@@ -78,6 +78,15 @@ export default function App() {
   const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
   const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string; c: [number, number] }[]>([]);
+  const vigiaRows = Object.values(ibgeNames)
+    .map((nome) => ({
+      nome,
+      status: NAO_ADERIRAM.includes(nome) ? ("nao" as const) : EM_ADESAO.includes(nome) ? ("adesao" as const) : ("aderido" as const),
+    }))
+    .sort((a, b) => {
+      const ordem = { aderido: 0, adesao: 1, nao: 2 };
+      return ordem[a.status] - ordem[b.status] || a.nome.localeCompare(b.nome, "pt-BR");
+    });
   const vigiaCodes = new Set(
     Object.entries(ibgeNames)
       .filter(([, nome]) => isVigiaAderido(nome))
@@ -327,37 +336,20 @@ export default function App() {
         <div className="col">
           <div className="card" id="c-mun">
             <h2>
-              Câmeras por município <em>{municipios.length} municípios</em>
+              Municípios com câmeras <em>{vigiaRows.filter((r) => r.status === "aderido").length} aderidos</em>
             </h2>
-            <div className="muns" id="muns">
-              {municipios.map((m) => {
-                const t = m.total;
-                return (
-                  <div
-                    key={m.id}
-                    className={`mun${m.nome === "Cuiabá" ? " cb" : ""}${m.nome === ping ? " ping" : ""}`}
-                  >
-                    <span>{m.nome}</span>
-                    <div className="stack">
-                      <i style={{ width: `${(m.cameras.on / t) * 100}%`, background: "var(--on)" }} />
-                      <i style={{ width: `${(m.cameras.off / t) * 100}%`, background: "var(--off)" }} />
-                      <i style={{ width: `${(m.cameras.man / t) * 100}%`, background: "var(--man)" }} />
-                    </div>
-                    <em>{t}</em>
-                  </div>
-                );
-              })}
+            <div className="muns-list" id="muns">
+              {vigiaRows.map((r) => (
+                <div key={r.nome} className={`mun-row ${r.status}`}>
+                  <span>{r.nome}</span>
+                  <small>
+                    {r.status === "aderido" ? "aderido" : r.status === "adesao" ? "em adesão" : "não aderiu"}
+                  </small>
+                </div>
+              ))}
             </div>
             <div className="legend">
-              <span>
-                <i className="dot" style={{ background: "var(--on)" }} />Online
-              </span>
-              <span>
-                <i className="dot" style={{ background: "var(--off)" }} />Offline
-              </span>
-              <span>
-                <i className="dot" style={{ background: "var(--man)" }} />Manutenção
-              </span>
+              <span>Fonte: SESP-MT · adesão ao Vigia Mais MT (contagem por município não é publicada)</span>
             </div>
           </div>
         </div>
