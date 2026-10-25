@@ -39,6 +39,19 @@ function geomToPath(geom: any): string {
     .join(" ");
 }
 
+function geomCenter(geom: any): [number, number] {
+  if (!geom) return [0, 0];
+  const pts: number[][] = [];
+  const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.coordinates || [];
+  polys.forEach((poly: number[][][]) => poly.forEach((ring) => ring.forEach((p) => pts.push(p))));
+  if (!pts.length) return [0, 0];
+  const lons = pts.map((p) => p[0]);
+  const lats = pts.map((p) => p[1]);
+  const lon = (Math.min(...lons) + Math.max(...lons)) / 2;
+  const lat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  return [Number(px(lon)), Number(py(lat))];
+}
+
 const SIDE: Record<string, "l" | "r"> = {
   "Cuiabá": "l",
   "Várzea Grande": "r",
@@ -64,7 +77,7 @@ export default function App() {
   const [ibgeCodes, setIbgeCodes] = useState<Record<string, number>>({});
   const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
-  const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string }[]>([]);
+  const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string; c: [number, number] }[]>([]);
   const vigiaCodes = new Set(
     Object.entries(ibgeNames)
       .filter(([, nome]) => isVigiaAderido(nome))
@@ -143,6 +156,7 @@ export default function App() {
         const paths = (gj?.features || []).map((f: any) => ({
           code: f.properties?.codarea,
           d: geomToPath(f.geometry),
+          c: geomCenter(f.geometry),
         }));
         setAllMunPaths(paths);
       })
@@ -387,6 +401,27 @@ export default function App() {
                       />
                     );
                   })}
+                </g>
+              )}
+              {allMunPaths.length > 0 && (
+                <g pointerEvents="none">
+                  {allMunPaths
+                    .filter((m) => vigiaCodes.has(Number(m.code)) && !municipios.some((x) => x.nome === ibgeNames[Number(m.code)]))
+                    .map((m) => {
+                      const nome = ibgeNames[Number(m.code)] || "";
+                      const [cx, cy] = m.c;
+                      return (
+                        <g key={`cam-${m.code}`} style={{ color: "var(--acc)" }}>
+                          <g transform={`translate(${(cx - 1.44).toFixed(2)}, ${(cy - 1.44).toFixed(2)}) scale(0.12)`}>
+                            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            <circle cx="12" cy="13" r="3" fill="none" stroke="currentColor" strokeWidth="2" />
+                          </g>
+                          <text x={cx} y={cy + 1.5} textAnchor="middle" style={{ fontSize: "1.9px" }}>
+                            {nome}
+                          </text>
+                        </g>
+                      );
+                    })}
                 </g>
               )}
               {munBoundary && (
