@@ -5,6 +5,12 @@ const morgan = require("morgan");
 const env = require("./config/env");
 const routes = require("./routes");
 const { errorHandler, notFound } = require("./middlewares/errorHandler");
+// Auto-sync de ocorrências (funciona tanto em server.js quanto como handler serverless)
+try {
+  require("./services/occurrences.sync").startAutoSync();
+} catch (e) {
+  console.warn("Auto-sync init falhou:", e.message);
+}
 
 const app = express();
 

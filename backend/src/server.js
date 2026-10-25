@@ -18,7 +18,6 @@ server.listen(PORT, () => {
   logger.info(`API rodando em http://localhost:${PORT}`);
   logger.info(`WebSocket pronto`);
   if (env.nodeEnv !== "test" && !process.env.VERCEL && process.env.SIMULATOR_ENABLED !== "false") simulator.start();
-  if (env.nodeEnv !== "test") occSync.startAutoSync();
 });
 
 process.on("SIGINT", () => {
