@@ -20,6 +20,16 @@ export const NAO_ADERIRAM = [
 
 export const EM_ADESAO = ["Apiacás", "Porto Estrela", "Jaciara"];
 
+// Números oficiais divulgados pela SESP-MT (publicados em reportagens).
+// Não há painel público com status online/offline por câmera.
+export const RESUMO_OFICIAL = {
+  camerasEntregues: 19900,
+  camerasEmOperacao: 15900,
+  municipiosAderidos: 130,
+  atualizadoEm: "24/03/2026",
+  fonte: "SESP-MT, divulgado em Bastidores MT (24/03/2026)",
+};
+
 export function isVigiaAderido(nome: string): boolean {
   return !NAO_ADERIRAM.includes(nome) && !EM_ADESAO.includes(nome);
 }

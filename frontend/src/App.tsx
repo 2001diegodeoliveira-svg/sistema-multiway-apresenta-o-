@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { api } from "./api/client";
 import { useSocket } from "./hooks/useSocket";
 import CamerasView from "./components/CamerasView";
-import { EM_ADESAO, NAO_ADERIRAM, isVigiaAderido } from "./data/vigiaMais";
+import { EM_ADESAO, NAO_ADERIRAM, RESUMO_OFICIAL, isVigiaAderido } from "./data/vigiaMais";
 import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
@@ -244,12 +244,6 @@ export default function App() {
     say(auto ? "Rotação automática desligada" : "Rotação automática ligada");
   };
 
-  const total = kpis
-    ? kpis.totalCameras
-    : municipios.reduce((a, m) => a + m.total, 0);
-  const on = kpis ? kpis.online : municipios.reduce((a, m) => a + m.cameras.on, 0);
-  const off = kpis ? kpis.offline : municipios.reduce((a, m) => a + m.cameras.off, 0);
-  const man = kpis ? kpis.manutencao : municipios.reduce((a, m) => a + m.cameras.man, 0);
 
   const C = { on: "var(--on)", off: "var(--off)", man: "var(--man)" };
 
@@ -319,11 +313,10 @@ export default function App() {
 
       <section className="kpis" id="kpis">
         {[
-          ["Total de câmeras", total, "var(--acc)"],
-          ["Online", on, C.on],
-          ["Offline", off, C.off],
-          ["Em manutenção", man, C.man],
-          ["Disponibilidade", total ? (on / total * 100).toFixed(1) + "%" : "0%", "var(--acc)"],
+          ["Câmeras entregues", RESUMO_OFICIAL.camerasEntregues.toLocaleString("pt-BR"), "var(--acc)"],
+          ["Em operação (Ciosp)", RESUMO_OFICIAL.camerasEmOperacao.toLocaleString("pt-BR"), C.on],
+          ["Municípios aderidos", RESUMO_OFICIAL.municipiosAderidos, "var(--acc)"],
+          ["Taxa em operação", ((RESUMO_OFICIAL.camerasEmOperacao / RESUMO_OFICIAL.camerasEntregues) * 100).toFixed(1) + "%", C.man],
         ].map(([label, val, color]) => (
           <div className="kpi" key={String(label)} style={{ "--c": color } as any}>
             <b>{val}</b>
