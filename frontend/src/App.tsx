@@ -428,7 +428,7 @@ export default function App() {
       </section>
 
       {cur !== "cameras" && (
-        <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 ${GRID[cur] ?? GRID.geral}`} style={{ minHeight: 0 }}>
+        <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 ${GRID[cur] ?? GRID.geral}`} style={{ minHeight: 0, height: "100%" }}>
           <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: 0, height: "100%" }}>
             <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
               <div className="card-body min-h-0 gap-2 p-4">
