@@ -428,9 +428,9 @@ export default function App() {
       </section>
 
       {cur !== "cameras" && (
-        <main className={`grid min-h-0 flex-none grid-cols-1 gap-3 xl:flex-1 ${GRID[cur] ?? GRID.geral}`}>
+        <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 ${GRID[cur] ?? GRID.geral}`}>
           <div className="flex min-h-0 flex-col gap-3">
-            <div className={`card h-[70vh] min-h-0 shrink-0 flex-1 border xl:shrink border-base-content/10 bg-base-200/70 shadow-xl transition xl:h-auto ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
+            <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
               <div className="card-body min-h-0 gap-2 p-4">
                 <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
                   Municípios com câmeras
