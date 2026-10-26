@@ -438,7 +438,7 @@ export default function App() {
                     {vigiaRows.filter((r) => r.status === "aderido").length} aderidos
                   </em>
                 </h2>
-                <div ref={munsRef} className="min-h-[40vh] flex-1 divide-y divide-base-content/10 overflow-y-auto xl:min-h-0" id="muns" style={{ flex: "1 1 0%", minHeight: 0, display: "flex", flexDirection: "column" }}>
+                <div ref={munsRef} className="min-h-[40vh] flex-1 divide-y divide-base-content/10 overflow-y-auto xl:min-h-0" id="muns" style={{ flex: "1 1 0%", minHeight: 0, height: "100%" }}>
                   {vigiaRows.map((r) => (
                     <div key={r.nome} className="flex items-center justify-between gap-2 py-0.5 text-xs">
                       <span className="truncate">{r.nome}</span>
