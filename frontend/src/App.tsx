@@ -14,11 +14,11 @@ const OUT = [[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-5
 const SEQ = ["geral", "mapa", "municipios", "atencao", "ocorrencias", "cameras"];
 
 const GRID: Record<string, string> = {
-  geral: "lg:grid-cols-[1fr_1.25fr_1fr]",
-  municipios: "lg:grid-cols-[2.2fr_0.8fr_0.8fr]",
-  mapa: "lg:grid-cols-[0.8fr_2.2fr_0.8fr]",
-  atencao: "lg:grid-cols-[0.8fr_2.2fr_0.8fr]",
-  ocorrencias: "lg:grid-cols-[0.8fr_0.8fr_2.2fr]",
+  geral: "xl:grid-cols-[1fr_1.25fr_1fr]",
+  municipios: "xl:grid-cols-[2.2fr_0.8fr_0.8fr]",
+  mapa: "xl:grid-cols-[0.8fr_2.2fr_0.8fr]",
+  atencao: "xl:grid-cols-[0.8fr_2.2fr_0.8fr]",
+  ocorrencias: "xl:grid-cols-[0.8fr_0.8fr_2.2fr]",
 };
 
 const STATUS_RANK: Record<string, number> = { off: 0, man: 1 };
@@ -264,7 +264,7 @@ export default function App() {
   const onOff = (n: number, total: number) => (total ? (n / total) * 100 : 0);
 
   return (
-    <div className="flex h-dvh flex-col gap-3 overflow-y-auto p-3 lg:overflow-hidden lg:p-4">
+    <div className="flex h-dvh flex-col gap-3 overflow-y-auto p-3 xl:overflow-hidden xl:p-4">
       <div id="prog" ref={progRef} className="fixed inset-x-0 top-0 z-50 h-1 origin-left scale-x-0 bg-primary" />
 
       {alertMsg && (
@@ -333,7 +333,7 @@ export default function App() {
         </div>
       </header>
 
-      <section className="stats stats-vertical w-full border border-base-content/10 bg-base-200/70 shadow lg:stats-horizontal">
+      <section className="stats stats-horizontal w-full overflow-x-auto border border-base-content/10 bg-base-200/70 shadow">
         <div className="stat">
           <div className="stat-title">Câmeras entregues</div>
           <div className="stat-value text-primary">{RESUMO_OFICIAL.camerasEntregues.toLocaleString("pt-BR")}</div>
