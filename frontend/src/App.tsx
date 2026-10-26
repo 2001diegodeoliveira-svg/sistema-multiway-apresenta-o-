@@ -4,6 +4,7 @@ import { useSocket } from "./hooks/useSocket";
 import CamerasView from "./components/CamerasView";
 import { EM_ADESAO, NAO_ADERIRAM, RESUMO_OFICIAL, isVigiaAderido } from "./data/vigiaMais";
 import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./types";
+import type { Noticia } from "./api/client";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
   RefreshCw, Mic, Maximize, Minimize, Radio, CheckCircle2, Siren,
@@ -22,6 +23,16 @@ const GRID: Record<string, string> = {
 };
 
 const STATUS_RANK: Record<string, number> = { off: 0, man: 1 };
+
+const rtf = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });
+function tempoRelativo(iso: string, agora: Date): string {
+  const seg = Math.round((new Date(iso).getTime() - agora.getTime()) / 1000);
+  const abs = Math.abs(seg);
+  if (abs < 60) return rtf.format(seg, "second");
+  if (abs < 3600) return rtf.format(Math.round(seg / 60), "minute");
+  if (abs < 86400) return rtf.format(Math.round(seg / 3600), "hour");
+  return rtf.format(Math.round(seg / 86400), "day");
+}
 
 function sortAttention(list: CamInfo[]): CamInfo[] {
   return list
@@ -91,6 +102,9 @@ export default function App() {
   const [alertMsg, setAlertMsg] = useState<{ text: string; kind: AlertKind } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
   const [now, setNow] = useState(new Date());
+  const [news, setNews] = useState<{ updatedAt: string; items: Noticia[] }>({ updatedAt: "", items: [] });
+  const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const seenNews = useRef<Set<string> | null>(null);
 
   const alertTimer = useRef<number | null>(null);
   const progRef = useRef<HTMLDivElement>(null);
@@ -210,6 +224,31 @@ export default function App() {
         setAllMunPaths(paths);
       })
       .catch(() => {});
+  }, []);
+
+  // Notícias: atualiza a cada 60 s e destaca as que chegaram desde a última leitura
+  useEffect(() => {
+    let ativo = true;
+    const carregar = () =>
+      api
+        .noticias()
+        .then((r) => {
+          if (!ativo) return;
+          const ids = new Set(r.items.map((n) => n.id));
+          if (seenNews.current) {
+            const seen = seenNews.current;
+            setNewIds(new Set([...ids].filter((id) => !seen.has(id))));
+          }
+          seenNews.current = ids;
+          setNews(r);
+        })
+        .catch(() => {});
+    carregar();
+    const t = window.setInterval(carregar, 60000);
+    return () => {
+      ativo = false;
+      window.clearInterval(t);
+    };
   }, []);
 
   const isVercel = typeof window !== "undefined" && window.location.hostname.includes("vercel.app");
@@ -584,26 +623,36 @@ export default function App() {
 
           <div className="flex min-h-0 flex-col gap-3">
             <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("ocorrencias")} ${focused("ocorrencias")}`} id="c-occ">
-              <div className="card-body min-h-0 gap-3 p-4">
-                <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
-                  Ocorrências apoiadas pelo Vigia
-                  <em className="not-italic text-primary">hoje</em>
+              <div className="card-body min-h-0 gap-2 p-4">
+                <h2 className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-base-content/60">
+                  Notícias · Vigia Mais MT
+                  <span className="flex items-center gap-1.5 normal-case tracking-normal text-success">
+                    <span className="size-2 animate-pulse rounded-full bg-success" />
+                    {news.updatedAt ? `atualizado ${tempoRelativo(news.updatedAt, now)}` : "carregando…"}
+                  </span>
                 </h2>
-                <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto" id="occs">
-                  {occurrences.slice(0, 5).map((o, i) => (
-                    <div
-                      key={o.id}
-                      className={`rounded-r-xl border-l-4 bg-gradient-to-r from-primary/10 to-transparent p-3 text-sm ${
-                        i === 0 ? "border-success ico-pop" : "border-primary"
+                <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto" id="news">
+                  {news.items.length === 0 && (
+                    <p className="py-6 text-center text-sm text-base-content/60">
+                      {news.updatedAt ? "Nenhuma notícia encontrada." : "Buscando notícias…"}
+                    </p>
+                  )}
+                  {news.items.slice(0, 30).map((n) => (
+                    <a
+                      key={n.id}
+                      href={n.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`block rounded-r-xl border-l-4 bg-gradient-to-r from-primary/10 to-transparent p-3 text-sm transition hover:from-primary/20 ${
+                        newIds.has(n.id) ? "border-success ico-pop" : "border-primary"
                       }`}
                     >
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="badge badge-primary badge-sm font-bold uppercase">{o.tipo}</span>
-                        <time className="text-xs text-base-content/60">{o.quando}</time>
+                      <div className="flex items-center justify-between gap-2 text-xs text-base-content/60">
+                        <span className="truncate font-semibold text-primary">{n.fonte || "Notícia"}</span>
+                        <time className="shrink-0">{n.publicadoEm ? tempoRelativo(n.publicadoEm, now) : ""}</time>
                       </div>
-                      <b className="mt-1 block">{o.local}</b>
-                      <p className="text-base-content/70">{o.descricao}</p>
-                    </div>
+                      <b className="mt-1 block leading-snug">{n.titulo}</b>
+                    </a>
                   ))}
                 </div>
               </div>

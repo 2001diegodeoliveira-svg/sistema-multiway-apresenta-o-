@@ -1,5 +1,13 @@
 const BASE = import.meta.env.VITE_API_URL || "";
 
+export interface Noticia {
+  id: string;
+  titulo: string;
+  fonte: string;
+  link: string;
+  publicadoEm: string | null;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
@@ -27,6 +35,7 @@ export const api = {
   },
   occurrences: (limit = 50) => request<import("../types").Occurrence[]>(`/api/occurrences?limit=${limit}`),
   alerts: (limit = 50) => request<import("../types").Alert[]>(`/api/alerts?limit=${limit}`),
+  noticias: () => request<{ updatedAt: string; total: number; items: Noticia[] }>("/api/noticias"),
   login: (username: string, password: string) =>
     request<{ token: string; user: { username: string; role: string } }>("/api/auth/login", {
       method: "POST",

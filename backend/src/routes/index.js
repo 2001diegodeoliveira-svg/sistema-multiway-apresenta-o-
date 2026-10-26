@@ -6,6 +6,7 @@ const alerts = require("../controllers/alerts.controller");
 const auth = require("../controllers/auth.controller");
 const ibge = require("../controllers/ibge.controller");
 const sinfra = require("../controllers/sinfra.controller");
+const noticias = require("../controllers/noticias.controller");
 const { auth: authMw } = require("../middlewares/auth");
 
 const router = express.Router();
@@ -37,6 +38,9 @@ router.post("/ibge/cache/clear", ibge.clearCache);
 
 // Câmeras SINFRA (Obras ao Vivo)
 router.get("/sinfra/cameras", sinfra.list);
+
+// Notícias sobre o Vigia Mais MT (Google Notícias)
+router.get("/noticias", noticias.list);
 router.post("/occurrences/sync", authMw, occurrences.sync);
 
 // IBGE (proxy + cache)
