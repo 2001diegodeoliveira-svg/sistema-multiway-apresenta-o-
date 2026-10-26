@@ -429,7 +429,7 @@ export default function App() {
 
       {cur !== "cameras" && (
         <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-rows-[1fr] ${GRID[cur] ?? GRID.geral}`} style={{ minHeight: 0, height: "100%" }}>
-          <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: 0, height: "100%", flex: "1 1 0%", overflow: "hidden", display: "flex" }}>
+          <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: 0, height: "100%", flex: "1 1 0%", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
             <div className={`card min-h-[60vh] flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition xl:min-h-0 ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
               <div className="card-body min-h-0 gap-2 p-4">
                 <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
