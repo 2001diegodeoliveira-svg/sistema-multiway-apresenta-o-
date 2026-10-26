@@ -94,6 +94,36 @@ export default function App() {
 
   const alertTimer = useRef<number | null>(null);
   const progRef = useRef<HTMLDivElement>(null);
+  const munsRef = useRef<HTMLDivElement>(null);
+
+  // Rolagem automática da lista de municípios (pausa ao passar o mouse)
+  useEffect(() => {
+    const el = munsRef.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf = 0;
+    let pos = 0;
+    let paused = false;
+    const step = () => {
+      if (paused) {
+        pos = el.scrollTop;
+      } else {
+        const fim = el.scrollHeight - el.clientHeight;
+        pos = pos >= fim - 1 ? 0 : pos + 0.35;
+        el.scrollTop = pos;
+      }
+      raf = requestAnimationFrame(step);
+    };
+    const pausar = () => (paused = true);
+    const retomar = () => (paused = false);
+    el.addEventListener("mouseenter", pausar);
+    el.addEventListener("mouseleave", retomar);
+    raf = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(raf);
+      el.removeEventListener("mouseenter", pausar);
+      el.removeEventListener("mouseleave", retomar);
+    };
+  }, []);
 
   const vigiaRows = Object.values(ibgeNames)
     .map((nome) => ({
@@ -369,9 +399,9 @@ export default function App() {
                     {vigiaRows.filter((r) => r.status === "aderido").length} aderidos
                   </em>
                 </h2>
-                <div className="min-h-0 flex-1 divide-y divide-base-content/10 overflow-y-auto" id="muns">
+                <div ref={munsRef} className="min-h-0 flex-1 divide-y divide-base-content/10 overflow-y-auto" id="muns">
                   {vigiaRows.map((r) => (
-                    <div key={r.nome} className="flex items-center justify-between gap-2 py-1.5 text-sm">
+                    <div key={r.nome} className="flex items-center justify-between gap-2 py-0.5 text-xs">
                       <span className="truncate">{r.nome}</span>
                       <span
                         className={`badge badge-sm badge-outline whitespace-nowrap ${
