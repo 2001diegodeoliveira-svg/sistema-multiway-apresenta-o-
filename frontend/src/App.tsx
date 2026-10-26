@@ -430,7 +430,7 @@ export default function App() {
       {cur !== "cameras" && (
         <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 ${GRID[cur] ?? GRID.geral}`} style={{ minHeight: 0, height: "100%" }}>
           <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: 0, height: "100%" }}>
-            <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
+            <div className={`card min-h-[60vh] flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition xl:min-h-0 ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
               <div className="card-body min-h-0 gap-2 p-4">
                 <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
                   Municípios com câmeras
@@ -438,7 +438,7 @@ export default function App() {
                     {vigiaRows.filter((r) => r.status === "aderido").length} aderidos
                   </em>
                 </h2>
-                <div ref={munsRef} className="min-h-0 flex-1 divide-y divide-base-content/10 overflow-y-auto" id="muns">
+                <div ref={munsRef} className="min-h-[40vh] flex-1 divide-y divide-base-content/10 overflow-y-auto xl:min-h-0" id="muns">
                   {vigiaRows.map((r) => (
                     <div key={r.nome} className="flex items-center justify-between gap-2 py-0.5 text-xs">
                       <span className="truncate">{r.nome}</span>
