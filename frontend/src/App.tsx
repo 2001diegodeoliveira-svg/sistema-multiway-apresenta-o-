@@ -99,6 +99,7 @@ export default function App() {
   const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
   const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string; c: [number, number] }[]>([]);
+  const [hoveredMun, setHoveredMun] = useState<{ nome: string; x: number; y: number } | null>(null);
   const [alertMsg, setAlertMsg] = useState<{ text: string; kind: AlertKind } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
   const [now, setNow] = useState(new Date());
@@ -489,16 +490,39 @@ export default function App() {
                       <g pointerEvents="none">
                         {allMunPaths.map((m) => {
                           const isMon = vigiaCodes.has(Number(m.code));
+                          const nome = ibgeNames[Number(m.code)] || "";
+                          const isHover = hoveredMun?.nome === nome;
                           return (
                             <path
                               key={m.code}
                               d={m.d}
                               fill={isMon ? "var(--acc)" : "none"}
-                              fillOpacity={isMon ? 0.18 : 0}
+                              fillOpacity={isMon ? (hoveredMun?.nome === nome ? 0.4 : 0.18) : hoveredMun?.nome === nome ? 0.15 : 0}
                               stroke={isMon ? "var(--acc)" : "var(--line)"}
-                              strokeWidth={isMon ? 0.45 : 0.22}
-                              opacity={isMon ? 0.9 : 0.55}
-                            />
+                              strokeWidth={isMon ? (isHover ? 0.7 : 0.45) : isHover ? 0.45 : 0.22}
+                              opacity={isMon ? 1 : isHover ? 0.85 : 0.55}
+                              style={{ transition: "fill-opacity 0.2s, stroke-width 0.2s, opacity 0.2s", cursor: isMon ? "pointer" : "default" }}
+                              onMouseEnter={() => { if (nome) setHoveredMun({ nome, x: 0, y: 0 }); }}
+                              onMouseLeave={() => setHoveredMun(null)}
+                              onClick={() => {
+                                const code = Number(m.code);
+                                if (!vigiaCodes.has(code)) return;
+                                fetch(`${IBGE}/v3/malhas/municipios/${code}?formato=application/vnd.geo+json&qualidade=minima`)
+                                  .then((r) => r.json())
+                                  .then((gj) => {
+                                    const coords = gj?.features?.[0]?.geometry?.coordinates;
+                                    if (!coords) return;
+                                    const ring = Array.isArray(coords[0][0]) ? coords[0][0] : coords[0];
+                                    const d = ring
+                                      .map((c: number[], i: number) => `${i === 0 ? "M" : "L"} ${px(c[0])} ${py(c[1])}`)
+                                      .join(" ") + " Z";
+                                    setMunBoundary(d);
+                                  })
+                                  .catch(() => {});
+                              }}
+                            >
+                              {nome && <title>{nome}{isMon ? " · aderido ao Vigia Mais MT" : ""}</title>}
+                            </path>
                           );
                         })}
                       </g>

@@ -69,6 +69,18 @@ body {
 }
 
 /* Mapa SVG */
+#map {
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+}
+
+#map path {
+  transition: fill-opacity 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+}
+
+#map path:hover {
+  filter: brightness(1.35);
+}
+
 #map text {
   font-size: 3.1px;
   fill: var(--tx);
@@ -76,6 +88,7 @@ body {
   paint-order: stroke;
   stroke: var(--bg);
   stroke-width: 0.7px;
+  transition: font-size 0.2s ease;
 }
 #map .ping {
   fill: none;
