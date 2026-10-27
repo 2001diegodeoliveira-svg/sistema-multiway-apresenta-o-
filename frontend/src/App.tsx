@@ -501,6 +501,7 @@ export default function App() {
                               stroke={isMon ? "var(--acc)" : "var(--line)"}
                               strokeWidth={isMon ? (isHover ? 0.7 : 0.45) : isHover ? 0.45 : 0.22}
                               opacity={isMon ? 1 : isHover ? 0.85 : 0.55}
+                              className={isMon ? "aderido" : ""}
                               style={{ transition: "fill-opacity 0.2s, stroke-width 0.2s, opacity 0.2s", cursor: isMon ? "pointer" : "default" }}
                               onMouseEnter={() => { if (nome) setHoveredMun({ nome, x: 0, y: 0 }); }}
                               onMouseLeave={() => setHoveredMun(null)}

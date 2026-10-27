@@ -73,12 +73,113 @@ body {
   filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
 }
 
+#map {
+  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+  animation: mapFadeIn 0.8s ease-out both;
+}
+
+@keyframes mapFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}
+
 #map path {
-  transition: fill-opacity 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease;
+  transition: fill-opacity 0.2s ease, stroke-width 0.2s ease, opacity 0.2s ease, filter 0.2s ease;
+  transform-box: fill-box;
+  transform-origin: center;
 }
 
 #map path:hover {
-  filter: brightness(1.35);
+  filter: brightness(1.4) drop-shadow(0 0 4px var(--acc));
+  transform: scale(1.02);
+}
+
+/* Pulso nos municípios aderidos */
+#map path.aderido {
+  animation: aderidoPulse 3s ease-in-out infinite;
+}
+
+@keyframes aderidoPulse {
+  0%, 100% { fill-opacity: 0.18; }
+  50% { fill-opacity: 0.32; }
+}
+
+/* Ícones de câmera com bounce no hover */
+#map g g {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+#map path:hover + text,
+#map g:hover text {
+  font-size: 3.4px;
+  fill: var(--acc);
+}
+
+/* Legenda animada */
+#map + .legend span {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+
+#map + .legend span:hover {
+  transform: translateY(-2px);
+  color: var(--tx);
+}
+
+/* Borda animada no card do mapa */
+#c-map {
+  position: relative;
+  overflow: hidden;
+}
+
+#c-map::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(120deg, transparent, var(--acc), transparent);
+  background-size: 200% 200%;
+  animation: borderSweep 4s linear infinite;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes borderSweep {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Entrada em cascata dos cards */
+.card {
+  animation: cardIn 0.6s ease-out both;
+}
+
+.card:nth-child(2) { animation-delay: 0.08s; }
+.card:nth-child(3) { animation-delay: 0.16s; }
+
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Brilho nos ícones de câmera */
+#map g g {
+  filter: drop-shadow(0 0 2px rgba(58, 184, 255, 0.6));
+  animation: camGlow 2.5s ease-in-out infinite;
+}
+
+@keyframes camGlow {
+  0%, 100% { filter: drop-shadow(0 0 2px rgba(58, 184, 255, 0.4)); }
+  50% { filter: drop-shadow(0 0 6px rgba(58, 184, 255, 0.9)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #map, #map path, #map g g, .card, #c-map::before {
+    animation: none !important;
+  }
 }
 
 #map text {
