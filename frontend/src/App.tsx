@@ -117,6 +117,7 @@ export default function App() {
   const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
   const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string; c: [number, number] }[]>([]);
+  const ESPESSURA = 14;
   const [hoveredMun, setHoveredMun] = useState<{ nome: string; x: number; y: number } | null>(null);
   const [alertMsg, setAlertMsg] = useState<{ text: string; kind: AlertKind } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
@@ -302,6 +303,25 @@ export default function App() {
       })
       .catch(() => {});
   }, []);
+
+  // Gera as camadas de extrusão (espessura) via JS a partir de #mt-shape
+  useEffect(() => {
+    const svg = document.getElementById("map");
+    if (!svg || allMunPaths.length === 0) return;
+    const shape = svg.querySelector("#mt-shape");
+    const extrusao = svg.querySelector(".extrusao");
+    if (!shape || !extrusao) return;
+    extrusao.innerHTML = "";
+    const ns = "http://www.w3.org/2000/svg";
+    for (let i = 0; i < ESPESSURA; i++) {
+      const use = document.createElementNS(ns, "use");
+      use.setAttribute("href", "#mt-shape");
+      use.setAttribute("transform", `translate(0, ${i})`);
+      const lightness = 12 + i * 0.4;
+      use.style.fill = `hsl(220 60% ${lightness}%)`;
+      extrusao.appendChild(use);
+    }
+  }, [allMunPaths]);
 
   // Notícias: atualiza a cada 60 s e destaca as que chegaram desde a última leitura
   useEffect(() => {
@@ -629,6 +649,15 @@ export default function App() {
                       <pattern id="g" width="10" height="10" patternUnits="userSpaceOnUse">
                         <path d="M10 0H0V10" fill="none" stroke="var(--line)" strokeWidth=".2" />
                       </pattern>
+                      <linearGradient id="gradTopo" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#2b4f9e" />
+                        <stop offset="100%" stopColor="#14264d" />
+                      </linearGradient>
+                      <g id="mt-shape">
+                        {allMunPaths.map((m) => (
+                          <path key={m.code} d={m.d} />
+                        ))}
+                      </g>
                     </defs>
                     <rect width="118" height="107" fill="url(#g)" opacity=".6" />
                     {outlinePath ? (
@@ -643,7 +672,10 @@ export default function App() {
                       />
                     )}
                     {allMunPaths.length > 0 && (
-                      <g pointerEvents="none">
+                      <g className="extrusao" data-extrusao="" />
+                    )}
+                    {allMunPaths.length > 0 && (
+                      <g className="topo" pointerEvents="auto">
                         {allMunPaths.map((m) => {
                           const isMon = vigiaCodes.has(Number(m.code));
                           const nome = ibgeNames[Number(m.code)] || "";
@@ -658,9 +690,12 @@ export default function App() {
                               strokeWidth={isMon ? (isHover ? 0.7 : 0.45) : isHover ? 0.45 : 0.22}
                               opacity={isMon ? 1 : isHover ? 0.85 : 0.55}
                               className={isMon ? "aderido" : ""}
+                              tabIndex={0}
                               style={{ transition: "fill-opacity 0.2s, stroke-width 0.2s, opacity 0.2s", cursor: isMon ? "pointer" : "default" }}
                               onMouseEnter={() => { if (nome) setHoveredMun({ nome, x: 0, y: 0 }); }}
-                              onMouseLeave={() => setHoveredMun(null)}
+                              onFocus={() => { if (nome) setHoveredMun({ nome, x: 0, y: 0 }); }}
+                               onBlur={() => setHoveredMun(null)}
+                               onMouseLeave={() => setHoveredMun(null)}
                               onClick={() => {
                                 const code = Number(m.code);
                                 if (!vigiaCodes.has(code)) return;
@@ -703,6 +738,28 @@ export default function App() {
                               </g>
                             );
                           })}
+                      </g>
+                    )}
+                    {allMunPaths.length > 0 && (
+                      <g className="labels" pointerEvents="none">
+                        {allMunPaths.map((m) => {
+                          const nome = ibgeNames[Number(m.code)] || "";
+                          if (!nome) return null;
+                          const principais = ["Cuiabá", "Várzea Grande", "Rondonópolis", "Sinop", "Tangará da Serra", "Cáceres", "Sorriso", "Lucas do Rio Verde", "Primavera do Leste", "Barra do Garças"];
+                          const isPrincipal = principais.includes(nome);
+                          const isHover = hoveredMun?.nome === nome;
+                          return (
+                            <text
+                              key={`label-${m.code}`}
+                              x={m.c[0]}
+                              y={m.c[1]}
+                              textAnchor="middle"
+                              className={`mun-label ${isPrincipal ? "principal" : ""} ${isHover ? "is-hover" : ""}`}
+                            >
+                              {nome}
+                            </text>
+                          );
+                        })}
                       </g>
                     )}
                     {munBoundary && (

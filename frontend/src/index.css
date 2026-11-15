@@ -144,36 +144,121 @@ body {
   overflow: hidden;
 }
 
-/* Efeito 3D leve no mapa (perspectiva CSS sobre o SVG gerado do GeoJSON) */
+/* ===== Mapa 3D de Mato Grosso (CSS/SVG/JS, sem libs) ===== */
+:root {
+  --cor-topo: #2b4f9e;
+  --cor-topo-fim: #14264d;
+  --cor-borda: #5b8dff;
+  --cor-fundo-mapa: #0a0f1c;
+  --angulo-x: 55deg;
+  --angulo-z: -12deg;
+  --espessura: 14;
+}
+
 #c-map .map-3d-wrap {
-  perspective: 1100px;
-  perspective-origin: 50% 40%;
+  position: relative;
+  perspective: 1200px;
+  perspective-origin: 50% 30%;
+  background: radial-gradient(ellipse at 50% 20%, #12203a 0%, #0a0f1c 70%);
+  overflow: hidden;
+  border-radius: 16px;
+}
+
+#c-map .map-3d-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(80, 120, 200, .08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 120, 200, .08) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 #map.map-3d {
-  transform: rotateX(22deg) scale(0.92);
-  transform-origin: 50% 100%;
   transform-style: preserve-3d;
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.45));
+  transform: rotateX(var(--angulo-x)) rotateZ(var(--angulo-z));
+  transform-origin: 50% 50%;
+  transition: transform .6s ease;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-#c-map:hover #map.map-3d {
-  transform: rotateX(12deg) scale(0.97);
+#c-map .map-3d-wrap:hover #map.map-3d {
+  transform: rotateX(45deg) rotateZ(-5deg) scale(1.03);
 }
 
-/* Sombra de profundidade sob o mapa */
-#c-map .map-shadow {
-  position: absolute;
-  left: 8%;
-  right: 8%;
-  bottom: 6%;
-  height: 14px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), transparent 70%);
-  filter: blur(6px);
+#map .extrusao {
+  filter: drop-shadow(0 30px 25px rgba(0, 0, 0, .7));
+}
+
+#map .extrusao use {
+  stroke: none;
   pointer-events: none;
-  z-index: 0;
+}
+
+#map .topo path {
+  fill: url(#gradTopo);
+  stroke: var(--cor-borda);
+  stroke-width: .6;
+  transition: transform .25s ease, fill .25s ease, filter .25s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+#map .topo path:hover {
+  transform: translateY(-6px) scale(1.04);
+  fill: #2f6bff;
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .6)) drop-shadow(0 0 10px rgba(80, 140, 255, .9));
+}
+
+#map .topo path {
+  filter: drop-shadow(0 0 1px rgba(120, 170, 255, .8));
+}
+
+#map text.mun-label {
+  font-size: 5px;
+  fill: #e8f0ff;
+  paint-order: stroke;
+  stroke: #0a0f1c;
+  stroke-width: 1.2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s ease;
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: rotateZ(12deg) rotateX(-55deg);
+}
+
+#map text.mun-label.principal,
+#map text.mun-label.is-hover {
+  opacity: 1;
+}
+
+#map .topo path:focus {
+  outline: none;
+  transform: translateY(-6px) scale(1.04);
+  fill: #2f6bff;
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .6)) drop-shadow(0 0 10px rgba(80, 140, 255, .9));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #map.map-3d,
+  #c-map .map-3d-wrap:hover #map.map-3d,
+  #map .topo path,
+  #map text.mun-label {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+html.lowfx #map.map-3d,
+html.lowfx #c-map .map-3d-wrap:hover #map.map-3d {
+  transform: rotateX(var(--angulo-x)) rotateZ(var(--angulo-z)) !important;
+  transition: none !important;
 }
 
 #c-map::before {
