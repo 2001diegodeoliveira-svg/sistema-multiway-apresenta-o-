@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ExternalLink, LayoutGrid, List, Maximize2, MapPin, RefreshCw, Video, VideoOff, X } from "lucide-react";
 
 export interface SinfraCamera {
@@ -29,6 +29,48 @@ type Filter = "all" | "online" | "offline";
 type View = "mosaic" | "list";
 
 const REFRESH_MS = 2 * 60 * 1000;
+
+// Cada card do mosaico é um player de vídeo ao vivo (iframe). Num navegador de
+// TV, muitos decodificadores simultâneos estouram a GPU e causam tearing /
+// cintilação. Limita o mosaico e só monta o iframe quando ele está na tela.
+const MAX_LIVE = 6;
+
+function LazyFrame({ src, title }: { src: string; title: string }) {
+  const holder = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+
+  useEffect(() => {
+    const el = holder.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setInView(true);
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => setInView(e.isIntersecting)),
+      { rootMargin: "150px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <div ref={holder} className="h-full w-full">
+      {inView ? (
+        <iframe
+          src={src}
+          title={title}
+          allow="autoplay; fullscreen"
+          className="block h-full w-full border-0 bg-black"
+        />
+      ) : (
+        <div className="grid h-full w-full place-items-center bg-black text-xs text-base-content/50">
+          vídeo pausado (fora da tela)
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function CamerasView() {
   const [data, setData] = useState<SinfraResponse | null>(null);
@@ -73,7 +115,8 @@ export default function CamerasView() {
     });
   }, [data, filter, query]);
 
-  const mosaic = useMemo(() => visible.filter((c) => c.online), [visible]);
+  const onlineList = useMemo(() => visible.filter((c) => c.online), [visible]);
+  const mosaic = useMemo(() => onlineList.slice(0, MAX_LIVE), [onlineList]);
 
   const filters: [Filter, string][] = [
     ["all", "Todas"],
@@ -82,17 +125,17 @@ export default function CamerasView() {
   ];
 
   return (
-    <section className="card flex min-h-0 flex-1 flex-col gap-3 border border-base-content/10 bg-base-200/70 p-4 shadow-xl">
+    <section className="card flex min-h-0 flex-1 flex-col gap-3 glass-card p-4 motion-preset-fade motion-duration-500">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-base-content/60">
+          <h2 className="text-xs font-bold uppercase glass-label">
             Câmeras SINFRA · Obras ao Vivo
           </h2>
           <p className="text-sm text-base-content/70">
             {data
               ? `${data.total} câmeras · ${data.online} ao vivo · ${data.offline} offline · ${
                   data.source === "live" ? "fonte: SINFRA-MT" : "snapshot local (SINFRA indisponível)"
-                }`
+                }${data.online > MAX_LIVE ? ` · mosaico: ${MAX_LIVE} por vez` : ""}`
               : "carregando câmeras…"}
           </p>
         </div>
@@ -148,14 +191,8 @@ export default function CamerasView() {
       {view === "mosaic" ? (
         <div className="grid min-h-0 flex-1 auto-rows-max grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-3 overflow-y-auto">
           {mosaic.map((c) => (
-            <div key={c.slug} className="relative aspect-video overflow-hidden rounded-xl border border-base-content/10 bg-black">
-              <iframe
-                src={c.link}
-                title={c.localizacao || c.slug}
-                loading="lazy"
-                allow="autoplay; fullscreen"
-                className="block h-full w-full border-0 bg-black"
-              />
+            <div key={c.slug} className="relative aspect-video overflow-hidden rounded-xl border border-base-content/10 bg-black motion-preset-pop motion-duration-500">
+              <LazyFrame src={c.link} title={c.localizacao || c.slug} />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end gap-2 bg-gradient-to-t from-black/85 to-transparent p-3 text-white">
                 <span className="badge badge-success badge-sm gap-1 font-bold">
                   <Video size={12} strokeWidth={2.4} /> AO VIVO
@@ -186,7 +223,7 @@ export default function CamerasView() {
             <button
               key={c.slug}
               onClick={() => setSelected(c)}
-              className={`card flex flex-col items-start gap-2 border-l-4 bg-base-100/60 p-4 text-left transition hover:bg-base-300/60 ${
+              className={`glass-card flex flex-col items-start gap-2 border-l-4 p-4 text-left transition motion-preset-slide-up motion-duration-300 ${
                 c.online ? "border-success" : "border-error"
               }`}
             >

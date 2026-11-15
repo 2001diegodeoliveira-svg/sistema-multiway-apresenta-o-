@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Teste de Tela — Vigia Mais MT</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; color: #fff; overflow: hidden;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #stage { position: fixed; inset: 0; background: #000; }
+  #bars { position: fixed; inset: 0; display: none;
+    background: repeating-linear-gradient(90deg,
+      #fff 0 8.33%, #ff0 8.33% 16.66%, #0ff 16.66% 25%, #0f0 25% 33.3%,
+      #f0f 33.3% 41.6%, #f00 41.6% 50%, #00f 50% 58.3%, #000 58.3% 66.6%,
+      #fff 66.6% 75%, #ff0 75% 83.3%, #0ff 83.3% 91.6%, #0f0 91.6% 100%); }
+  #motion { position: fixed; inset: 0; display: none; overflow: hidden; background: #000; }
+  #motion .bar { position: absolute; top: 0; bottom: 0; width: 12vw; background: #3ab8ff;
+    animation: mv 2s linear infinite; }
+  #motion .bar2 { background: #fff; width: 2vw; animation-duration: 1s; opacity: .9; }
+  @keyframes mv { from { left: -12vw; } to { left: 100vw; } }
+  #top { position: fixed; left: 0; right: 0; top: 0; padding: 8px; display: flex; gap: 6px;
+    flex-wrap: wrap; justify-content: center; background: linear-gradient(rgba(0,0,0,.7), transparent); }
+  button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.35);
+    background: rgba(0,0,0,.55); color: #fff; cursor: pointer; }
+  button.on { background: #3ab8ff; color: #04182a; font-weight: 700; }
+  #hud { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px;
+    background: rgba(0,0,0,.6); font-size: 13px; line-height: 1.4; display: flex; gap: 16px;
+    flex-wrap: wrap; align-items: center; }
+  #hud b { color: #3ab8ff; }
+  #count { font-variant-numeric: tabular-nums; font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="bars"></div>
+<div id="motion"><div class="bar"></div><div class="bar bar2" style="animation-delay:-.5s"></div></div>
+<div id="top"></div>
+<div id="hud">
+  <span id="modeLbl">modo: preto</span>
+  <span id="res"></span>
+  <span id="dpr"></span>
+  <span id="rm"></span>
+  <span>segundos: <span id="count">0</span></span>
+  <span><b>Se a COR SÓLIDA piscar, o defeito é do painel/cabo HDMI/fonte — não é código.</b></span>
+</div>
+<script>
+(function () {
+  var stage = document.getElementById("stage");
+  var bars = document.getElementById("bars");
+  var motion = document.getElementById("motion");
+  var top = document.getElementById("top");
+  var modeLbl = document.getElementById("modeLbl");
+  var countEl = document.getElementById("count");
+
+  var COLORS = { vermelho: "#ff0000", verde: "#00ff00", azul: "#0000ff",
+    branco: "#ffffff", preto: "#000000", cinza: "#808080" };
+  var MODES = ["vermelho", "verde", "azul", "branco", "preto", "cinza", "gradiente", "barras", "movimento"];
+  var LABEL = { vermelho: "vermelho", verde: "verde", azul: "azul", branco: "branco",
+    preto: "preto", cinza: "cinza", gradiente: "gradiente", barras: "barras de cor", movimento: "movimento" };
+
+  var idx = 0, auto = false, autoTimer = null, seconds = 0;
+
+  function apply(mode) {
+    if (mode === "gradiente") {
+      stage.style.background = "linear-gradient(135deg,#000814 0%,#3ab8ff 45%,#ffffff 60%,#000000 100%)";
+    } else {
+      stage.style.background = COLORS[mode] || "#000000";
+    }
+    bars.style.display = mode === "barras" ? "block" : "none";
+    motion.style.display = mode === "movimento" ? "block" : "none";
+    modeLbl.textContent = "modo: " + (LABEL[mode] || mode);
+    var btns = top.getElementsByTagName("button");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].className = btns[i].getAttribute("data-mode") === mode ? "on" : "";
+    }
+  }
+
+  function setMode(mode) { idx = MODES.indexOf(mode); apply(mode); }
+  function next() { idx = (idx + 1) % MODES.length; apply(MODES[idx]); }
+  function prev() { idx = (idx - 1 + MODES.length) % MODES.length; apply(MODES[idx]); }
+
+  function setAuto(on) {
+    auto = on;
+    if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+    if (auto) autoTimer = setInterval(next, 5000);
+    document.getElementById("btnAuto") && (document.getElementById("btnAuto").className = auto ? "on" : "");
+  }
+
+  MODES.forEach(function (m) {
+    var b = document.createElement("button");
+    b.textContent = m === "movimento" ? "Movimento" : (m === "barras" ? "Barras" : m.charAt(0).toUpperCase() + m.slice(1));
+    b.setAttribute("data-mode", m);
+    b.onclick = function (e) { e.stopPropagation(); setMode(m); };
+    top.appendChild(b);
+  });
+  var autoBtn = document.createElement("button");
+  autoBtn.id = "btnAuto";
+  autoBtn.textContent = "Auto 5s";
+  autoBtn.onclick = function (e) { e.stopPropagation(); setAuto(!auto); };
+  top.appendChild(autoBtn);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "ArrowRight" || e.key === " " || e.key === "Enter") { e.preventDefault(); next(); }
+    else if (e.key === "ArrowLeft") { e.preventDefault(); prev(); }
+    else if (e.key === "a" || e.key === "A") { setAuto(!auto); }
+  });
+  document.getElementById("stage").addEventListener("click", next);
+  document.getElementById("bars").addEventListener("click", next);
+  document.getElementById("motion").addEventListener("click", next);
+
+  function refreshInfo() {
+    document.getElementById("res").textContent = "resolução: " + window.innerWidth + "x" + window.innerHeight;
+    document.getElementById("dpr").textContent = "dpr: " + (window.devicePixelRatio || 1);
+    var rm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.getElementById("rm").textContent = "reduzir movimento: " + (rm ? "sim" : "não");
+  }
+  window.addEventListener("resize", refreshInfo);
+
+  setInterval(function () { seconds++; countEl.textContent = seconds; }, 1000);
+  refreshInfo();
+  setMode("vermelho");
+})();
+</script>
+</body>
+</html>

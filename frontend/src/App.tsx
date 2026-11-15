@@ -7,7 +7,7 @@ import type { Municipio, Kpis, Occurrence, Alert, Camera as CamInfo } from "./ty
 import type { Noticia } from "./api/client";
 import {
   LayoutDashboard, Map as MapIcon, Building2, AlertTriangle, FileText, Video,
-  RefreshCw, Mic, Maximize, Minimize, Radio, CheckCircle2, Siren,
+  RefreshCw, Mic, Maximize, Minimize, Radio, CheckCircle2, Siren, Tv,
 } from "lucide-react";
 
 const OUT = [[-61.6,-13.6],[-60.8,-11.9],[-60,-10.3],[-59.4,-9],[-58.4,-7.4],[-57,-8.2],[-55.8,-9],[-54.3,-9.9],[-52.5,-9.6],[-50.7,-9.2],[-50.2,-11],[-51,-12.6],[-51.8,-14],[-52.4,-15.6],[-53,-16.9],[-53.6,-17.8],[-55,-17.7],[-56.4,-17.4],[-57.6,-17.5],[-58.4,-16.3],[-60.2,-16.2],[-60,-15.1],[-61.4,-14.9]];
@@ -85,6 +85,24 @@ const CAMERA_PATH = "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0
 
 type AlertKind = "warn" | "ok" | "alert";
 
+/** Relógio isolado: só ele re-renderiza a 1 Hz. Antes, o `now` no App forçava
+ *  o app inteiro (mapa com ~142 paths, listas, etc.) a re-renderizar a cada segundo. */
+function Clock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const t = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(t);
+  }, []);
+  return (
+    <div className="text-right tabular-nums">
+      <b className="block text-2xl leading-none">{now.toLocaleTimeString("pt-BR")}</b>
+      <span className="text-xs capitalize text-base-content/60">
+        {now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
+      </span>
+    </div>
+  );
+}
+
 export default function App() {
   const [municipios, setMunicipios] = useState<Municipio[]>([]);
   const [kpis, setKpis] = useState<Kpis | null>(null);
@@ -102,34 +120,55 @@ export default function App() {
   const [hoveredMun, setHoveredMun] = useState<{ nome: string; x: number; y: number } | null>(null);
   const [alertMsg, setAlertMsg] = useState<{ text: string; kind: AlertKind } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
-  const [now, setNow] = useState(new Date());
+  const [minuto, setMinuto] = useState(() => new Date());
+  const [isFs, setIsFs] = useState(false);
+  const [lowFx, setLowFx] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    const q = new URLSearchParams(window.location.search).get("lowfx");
+    if (q === "1") return true;
+    if (q === "0") return false;
+    const saved = window.localStorage.getItem("vigia:lowfx");
+    if (saved !== null) return saved === "1";
+    return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  });
   const [news, setNews] = useState<{ updatedAt: string; items: Noticia[] }>({ updatedAt: "", items: [] });
   const [newIds, setNewIds] = useState<Set<string>>(new Set());
+  const [munQuery, setMunQuery] = useState("");
+  const [munStatusFilter, setMunStatusFilter] = useState<"all" | "aderido" | "adesao" | "nao">("all");
   const seenNews = useRef<Set<string> | null>(null);
 
   const alertTimer = useRef<number | null>(null);
+  const pingTimer = useRef<number | null>(null);
+  const sayTimer = useRef<number | null>(null);
   const progRef = useRef<HTMLDivElement>(null);
   const munsRef = useRef<HTMLDivElement>(null);
 
   // Rolagem automática da lista de municípios (pausa ao passar o mouse)
   useEffect(() => {
     const el = munsRef.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!el || lowFx || window.matchMedia("(prefers-reduced-motion: reduce)").matches || munQuery.trim() || munStatusFilter !== "all") return;
     let raf = 0;
-    let pos = 0;
+    let pos = el.scrollTop;
     let paused = false;
-    const step = () => {
+    let last = 0;
+    const step = (ts: number) => {
+      raf = requestAnimationFrame(step);
+      // Limita a ~30 fps e não roda com a aba oculta: antes escrevia scrollTop
+      // a 60 fps sempre, forçando layout/repaint contínuo (fonte de cintilação).
+      if (document.hidden || ts - last < 33) return;
+      last = ts;
       if (paused) {
         pos = el.scrollTop;
-      } else {
-        const fim = el.scrollHeight - el.clientHeight;
-        pos = pos >= fim - 1 ? 0 : pos + 0.35;
-        el.scrollTop = pos;
+        return;
       }
-      raf = requestAnimationFrame(step);
+      const fim = Math.max(0, el.scrollHeight - el.clientHeight);
+      if (fim <= 0) return;
+      pos = pos >= fim - 1 ? 0 : pos + 0.35;
+      const alvo = Math.round(pos);
+      if (alvo !== el.scrollTop) el.scrollTop = alvo;
     };
-    const pausar = () => (paused = true);
-    const retomar = () => (paused = false);
+    const pausar = () => { paused = true; };
+    const retomar = () => { paused = false; };
     el.addEventListener("mouseenter", pausar);
     el.addEventListener("mouseleave", retomar);
     raf = requestAnimationFrame(step);
@@ -138,7 +177,7 @@ export default function App() {
       el.removeEventListener("mouseenter", pausar);
       el.removeEventListener("mouseleave", retomar);
     };
-  }, []);
+  }, [lowFx, munQuery, munStatusFilter]);
 
   const vigiaRows = Object.values(ibgeNames)
     .map((nome) => ({
@@ -155,6 +194,20 @@ export default function App() {
       .map(([code]) => Number(code))
   );
 
+  const munCounts = {
+    all: vigiaRows.length,
+    aderido: vigiaRows.filter((r) => r.status === "aderido").length,
+    adesao: vigiaRows.filter((r) => r.status === "adesao").length,
+    nao: vigiaRows.filter((r) => r.status === "nao").length,
+  };
+  const munFiltered = vigiaRows.filter((r) => {
+    if (munStatusFilter !== "all" && r.status !== munStatusFilter) return false;
+    if (munQuery.trim()) {
+      return r.nome.toLowerCase().includes(munQuery.trim().toLowerCase());
+    }
+    return true;
+  });
+
   const showAlert = useCallback((text: string, kind: AlertKind = "ok") => {
     setAlertMsg({ text, kind });
     if (alertTimer.current) window.clearTimeout(alertTimer.current);
@@ -163,7 +216,8 @@ export default function App() {
 
   const say = useCallback((t: string) => {
     setHeard(t);
-    window.setTimeout(() => setHeard(null), 3500);
+    if (sayTimer.current) window.clearTimeout(sayTimer.current);
+    sayTimer.current = window.setTimeout(() => setHeard(null), 3500);
   }, []);
 
   const loadAll = useCallback(async () => {
@@ -183,9 +237,31 @@ export default function App() {
 
   useEffect(() => {
     loadAll().catch(console.error);
-    const t = window.setInterval(() => setNow(new Date()), 1000);
+    // Notícias só precisam de granularidade de minuto (antes era 1 Hz no app todo)
+    const t = window.setInterval(() => setMinuto(new Date()), 30000);
     return () => window.clearInterval(t);
   }, [loadAll]);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("lowfx", lowFx);
+    window.localStorage.setItem("vigia:lowfx", lowFx ? "1" : "0");
+  }, [lowFx]);
+
+  // Estado real de tela cheia (antes o ícone era lido no render e não atualizava)
+  useEffect(() => {
+    const onFs = () => setIsFs(Boolean(document.fullscreenElement));
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
+  }, []);
+
+  // Limpa timers pendentes ao desmontar (evita setState em componente morto)
+  useEffect(
+    () => () => {
+      if (pingTimer.current) window.clearTimeout(pingTimer.current);
+      if (sayTimer.current) window.clearTimeout(sayTimer.current);
+    },
+    []
+  );
 
   const IBGE = "https://servicodados.ibge.gov.br/api";
   // IBGE: dados do mapa direto no navegador (o backend serverless não alcança o IBGE)
@@ -259,7 +335,8 @@ export default function App() {
       "camera:update": (p: { camera: any; municipio: Municipio }) => {
         setMunicipios((prev) => prev.map((m) => (m.id === p.municipio.id ? p.municipio : m)));
         setPing(p.municipio.nome);
-        window.setTimeout(() => setPing(null), 4000);
+        if (pingTimer.current) window.clearTimeout(pingTimer.current);
+        pingTimer.current = window.setTimeout(() => setPing(null), 4000);
         setAttention((prev) => sortAttention([...prev.filter((c) => c.id !== p.camera.id), p.camera]));
       },
       "occurrence:new": (occ: Occurrence) => {
@@ -349,7 +426,14 @@ export default function App() {
       )}
 
       <header className="flex flex-wrap items-center gap-3">
-        <img src="/logo-vigia.png" alt="Vigia Mais MT" className="h-12 w-12 object-contain" />
+        <img
+          src="/logo-vigia-opt.png"
+          alt="Vigia Mais MT"
+          width={48}
+          height={45}
+          decoding="async"
+          className="h-12 w-12 object-contain"
+        />
         <h1 className="text-xl font-extrabold leading-none">Vigia Mais MT</h1>
         <span className="badge badge-success badge-outline gap-2 font-bold tracking-widest">
           <Radio size={14} strokeWidth={2.5} className="live-icon" /> AO VIVO
@@ -379,6 +463,16 @@ export default function App() {
             <RefreshCw size={15} strokeWidth={2.2} className={auto ? "spin" : ""} />
             <span className="hidden xl:inline">Auto</span>
           </button>
+          <button
+            id="lowfx"
+            className={`btn btn-sm join-item ${lowFx ? "btn-primary" : "btn-ghost border-base-content/15"}`}
+            onClick={() => setLowFx((v) => !v)}
+            title={lowFx ? "Modo TV ativo (animações reduzidas)" : "Ativar modo TV (reduz animações e flicker)"}
+            aria-pressed={lowFx}
+          >
+            <Tv size={15} strokeWidth={2.2} />
+            <span className="hidden xl:inline">TV</span>
+          </button>
           <button id="mic" className="btn btn-sm btn-ghost join-item border-base-content/15">
             <Mic size={15} strokeWidth={2.2} className="ico-mic" />
           </button>
@@ -386,42 +480,44 @@ export default function App() {
             id="fs"
             className="btn btn-sm btn-ghost join-item border-base-content/15"
             onClick={() =>
-              document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen()
+              isFs ? document.exitFullscreen() : document.documentElement.requestFullscreen()
             }
           >
-            {document.fullscreenElement ? <Minimize size={15} strokeWidth={2.2} /> : <Maximize size={15} strokeWidth={2.2} />}
+            {isFs ? <Minimize size={15} strokeWidth={2.2} /> : <Maximize size={15} strokeWidth={2.2} />}
           </button>
         </nav>
 
-        <img src="/logo-multiway.png" alt="MultiWay" className="h-auto w-[120px] object-contain opacity-90" />
+        <img
+          src="/logo-multiway-opt.png"
+          alt="MultiWay"
+          width={120}
+          height={40}
+          decoding="async"
+          className="h-auto w-[120px] object-contain opacity-90"
+        />
 
-        <div className="text-right tabular-nums">
-          <b className="block text-2xl leading-none">{now.toLocaleTimeString("pt-BR")}</b>
-          <span className="text-xs capitalize text-base-content/60">
-            {now.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "long" })}
-          </span>
-        </div>
+        <Clock />
       </header>
 
-      <section className="stats stats-horizontal w-full overflow-x-auto border border-base-content/10 bg-base-200/70 shadow">
+      <section className="stats stats-horizontal w-full overflow-x-auto glass-card motion-preset-pop motion-duration-500">
         <div className="stat">
           <div className="stat-title">Câmeras entregues</div>
-          <div className="stat-value text-primary">{RESUMO_OFICIAL.camerasEntregues.toLocaleString("pt-BR")}</div>
+          <div className="stat-value glass-value">{RESUMO_OFICIAL.camerasEntregues.toLocaleString("pt-BR")}</div>
           <div className="stat-desc">SESP-MT · {RESUMO_OFICIAL.atualizadoEm}</div>
         </div>
         <div className="stat">
           <div className="stat-title">Em operação (Ciosp)</div>
-          <div className="stat-value text-success">{RESUMO_OFICIAL.camerasEmOperacao.toLocaleString("pt-BR")}</div>
+          <div className="stat-value glass-value">{RESUMO_OFICIAL.camerasEmOperacao.toLocaleString("pt-BR")}</div>
           <div className="stat-desc">monitoradas em tempo real</div>
         </div>
         <div className="stat">
           <div className="stat-title">Municípios aderidos</div>
-          <div className="stat-value text-info">{RESUMO_OFICIAL.municipiosAderidos}</div>
+          <div className="stat-value glass-value">{RESUMO_OFICIAL.municipiosAderidos}</div>
           <div className="stat-desc">de 142 em Mato Grosso</div>
         </div>
         <div className="stat">
           <div className="stat-title">Taxa em operação</div>
-          <div className="stat-value text-warning">
+          <div className="stat-value glass-value">
             {((RESUMO_OFICIAL.camerasEmOperacao / RESUMO_OFICIAL.camerasEntregues) * 100).toFixed(1)}%
           </div>
           <div className="stat-desc">das câmeras entregues</div>
@@ -430,45 +526,105 @@ export default function App() {
 
       {cur !== "cameras" && (
         <main className={`grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-rows-[1fr] ${GRID[cur] ?? GRID.geral}`} style={{ minHeight: 0, height: "100%" }}>
-          <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: "60vh", height: "100%", flex: "1 1 0%", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
-            <div className={`card min-h-[60vh] flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition xl:min-h-0 ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
+          <div className="flex min-h-0 flex-col gap-3" style={{ minHeight: "0", height: "100%", flex: "1 1 0%", overflow: "hidden", display: "flex", alignItems: "stretch" }}>
+            <div className={`card min-h-[40vh] h-full flex-1 glass-card transition-opacity duration-300 xl:min-h-0 motion-preset-fade motion-duration-500 motion-delay-0 ${focus("municipios")} ${focused("municipios")}`} id="c-mun">
               <div className="card-body min-h-0 gap-2 p-4">
-                <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
+                <h2 className="flex shrink-0 justify-between text-xs font-bold uppercase glass-label">
                   Municípios com câmeras
-                  <em className="not-italic text-primary">
-                    {vigiaRows.filter((r) => r.status === "aderido").length} aderidos
-                  </em>
+                  <em className="not-italic text-primary">{munCounts.aderido} aderidos</em>
                 </h2>
-                <div ref={munsRef} className="min-h-[40vh] flex-1 divide-y divide-base-content/10 overflow-y-auto xl:min-h-0" id="muns" style={{ flex: "1 1 0%", minHeight: 0, height: "100%" }}>
-                  {vigiaRows.map((r) => (
-                    <div key={r.nome} className="flex items-center justify-between gap-2 py-0.5 text-xs">
-                      <span className="truncate">{r.nome}</span>
-                      <span
-                        className={`badge badge-sm badge-outline whitespace-nowrap ${
-                          r.status === "aderido" ? "badge-success" : r.status === "adesao" ? "badge-warning" : "badge-error"
-                        }`}
-                      >
-                        {r.status === "aderido" ? "aderido" : r.status === "adesao" ? "em adesão" : "não aderiu"}
-                      </span>
-                    </div>
+
+                {/* Busca */}
+                <div className="relative shrink-0">
+                  <input
+                    type="search"
+                    className="input input-sm w-full glass-card"
+                    placeholder="Buscar município…"
+                    value={munQuery}
+                    onChange={(e) => setMunQuery(e.target.value)}
+                    aria-label="Buscar município"
+                  />
+                </div>
+
+                {/* Filtros por status */}
+                <div className="flex shrink-0 flex-wrap gap-1.5">
+                  {([
+                    ["all", "Todos", munCounts.all, "badge-neutral"],
+                    ["aderido", "Aderidos", munCounts.aderido, "badge-success"],
+                    ["adesao", "Em adesão", munCounts.adesao, "badge-warning"],
+                    ["nao", "Não aderiram", munCounts.nao, "badge-error"],
+                  ] as const).map(([key, label, count, badge]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setMunStatusFilter(key)}
+                      className={`btn btn-xs gap-1 ${
+                        munStatusFilter === key ? "btn-primary" : "btn-ghost border-base-content/15"
+                      }`}
+                      aria-pressed={munStatusFilter === key}
+                    >
+                      <span className={`badge badge-xs ${badge}`}>{count}</span>
+                      {label}
+                    </button>
                   ))}
                 </div>
-                <p className="text-xs text-base-content/50">
-                  Fonte: SESP-MT · adesão ao Vigia Mais MT (contagem por município não é publicada)
+
+                <div ref={munsRef} className="min-h-0 flex-1 divide-y divide-base-content/10 overflow-y-auto xl:min-h-0" id="muns" style={{ flex: "1 1 0%", minHeight: 0 }}>
+                  {munFiltered.length === 0 && (
+                    <div className="py-6 text-center text-xs text-base-content/60">
+                      Nenhum município encontrado.
+                    </div>
+                  )}
+                  {munFiltered.map((r) => {
+                    const q = munQuery.trim().toLowerCase();
+                    const nome = r.nome;
+                    const idx = q ? nome.toLowerCase().indexOf(q) : -1;
+                    return (
+                      <div
+                        key={r.nome}
+                        className="flex items-center justify-between gap-2 py-1.5 text-xs transition-colors hover:bg-base-content/5"
+                      >
+                        <span className="truncate">
+                          {idx >= 0 ? (
+                            <>
+                              {nome.slice(0, idx)}
+                              <mark className="rounded bg-primary/30 px-0.5 text-base-content">
+                                {nome.slice(idx, idx + q.length)}
+                              </mark>
+                              {nome.slice(idx + q.length)}
+                            </>
+                          ) : (
+                            nome
+                          )}
+                        </span>
+                        <span
+                          className={`badge badge-sm badge-outline whitespace-nowrap ${
+                            r.status === "aderido" ? "badge-success" : r.status === "adesao" ? "badge-warning" : "badge-error"
+                          }`}
+                        >
+                          {r.status === "aderido" ? "aderido" : r.status === "adesao" ? "em adesão" : "não aderiu"}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="grow-0 shrink-0 truncate text-xs text-base-content/50">
+                  Fonte: SESP-MT · {munFiltered.length}/{vigiaRows.length} municípios
                 </p>
               </div>
             </div>
           </div>
 
           <div className="flex min-h-0 flex-col gap-3">
-            <div className={`card min-h-0 flex-[1.6] border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("mapa")} ${focused("mapa")}`} id="c-map">
+            <div className={`card min-h-0 flex-[1.6] glass-card transition-opacity duration-300 motion-preset-fade motion-duration-500 motion-delay-100 ${focus("mapa")} ${focused("mapa")}`} id="c-map">
               <div className="card-body min-h-0 gap-2 p-4">
-                <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
+                <h2 className="flex justify-between text-xs font-bold uppercase glass-label">
                   Mato Grosso · cobertura
                   <em className="not-italic text-primary">tamanho = nº de câmeras</em>
                 </h2>
-                <div className="relative min-h-[280px] flex-1">
-                  <svg id="map" viewBox="0 0 118 107" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full">
+                <div className="map-3d-wrap relative min-h-[280px] flex-1">
+                  <div className="map-shadow" aria-hidden="true" />
+                  <svg id="map" viewBox="0 0 118 107" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full map-3d">
                     <defs>
                       <pattern id="g" width="10" height="10" patternUnits="userSpaceOnUse">
                         <path d="M10 0H0V10" fill="none" stroke="var(--line)" strokeWidth=".2" />
@@ -610,9 +766,9 @@ export default function App() {
               </div>
             </div>
 
-            <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("atencao")} ${focused("atencao")}`} id="c-att">
+            <div className={`card min-h-0 flex-1 glass-card transition-opacity duration-300 motion-preset-fade motion-duration-500 motion-delay-200 ${focus("atencao")} ${focused("atencao")}`} id="c-att">
               <div className="card-body min-h-0 gap-2 p-4">
-                <h2 className="flex justify-between text-xs font-bold uppercase tracking-widest text-base-content/60">
+                <h2 className="flex justify-between text-xs font-bold uppercase glass-label">
                   Precisam de atenção
                   <em className="not-italic text-primary">
                     {attention.length} {attention.length === 1 ? "câmera" : "câmeras"}
@@ -647,13 +803,13 @@ export default function App() {
           </div>
 
           <div className="flex min-h-0 flex-col gap-3">
-            <div className={`card min-h-0 flex-1 border border-base-content/10 bg-base-200/70 shadow-xl transition ${focus("ocorrencias")} ${focused("ocorrencias")}`} id="c-occ">
+            <div className={`card min-h-0 flex-1 glass-card transition-opacity duration-300 motion-preset-fade motion-duration-500 motion-delay-300 ${focus("ocorrencias")} ${focused("ocorrencias")}`} id="c-occ">
               <div className="card-body min-h-0 gap-2 p-4">
-                <h2 className="flex items-center justify-between gap-2 text-xs font-bold uppercase tracking-widest text-base-content/60">
+                <h2 className="flex items-center justify-between gap-2 text-xs font-bold uppercase glass-label">
                   Notícias · Vigia Mais MT
                   <span className="flex items-center gap-1.5 normal-case tracking-normal text-success">
                     <span className="size-2 animate-pulse rounded-full bg-success" />
-                    {news.updatedAt ? `atualizado ${tempoRelativo(news.updatedAt, now)}` : "carregando…"}
+                    {news.updatedAt ? `atualizado ${tempoRelativo(news.updatedAt, minuto)}` : "carregando…"}
                   </span>
                 </h2>
                 <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto" id="news">
@@ -668,13 +824,13 @@ export default function App() {
                       href={n.link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={`block rounded-r-xl border-l-4 bg-gradient-to-r from-primary/10 to-transparent p-3 text-sm transition hover:from-primary/20 ${
+                      className={`block rounded-r-xl border-l-4 bg-gradient-to-r from-primary/10 to-transparent p-3 text-sm transition hover:from-primary/20 motion-preset-slide-up motion-duration-300 ${
                         newIds.has(n.id) ? "border-success ico-pop" : "border-primary"
                       }`}
                     >
                       <div className="flex items-center justify-between gap-2 text-xs text-base-content/60">
                         <span className="truncate font-semibold text-primary">{n.fonte || "Notícia"}</span>
-                        <time className="shrink-0">{n.publicadoEm ? tempoRelativo(n.publicadoEm, now) : ""}</time>
+                        <time className="shrink-0">{n.publicadoEm ? tempoRelativo(n.publicadoEm, minuto) : ""}</time>
                       </div>
                       <b className="mt-1 block leading-snug">{n.titulo}</b>
                     </a>

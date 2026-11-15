@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@plugin "tailwindcss-motion";
+@import "tailwindcss-intersect";
+
 @plugin "daisyui" {
   themes: false;
   logs: false;
@@ -10,13 +13,13 @@
   default: true;
   prefersdark: true;
   color-scheme: dark;
-  --color-base-100: #070d19;
-  --color-base-200: #0e1829;
-  --color-base-300: #14213a;
+  --color-base-100: #0b0f19;
+  --color-base-200: #111827;
+  --color-base-300: #1f2937;
   --color-base-content: #eaf1fb;
-  --color-primary: #3ab8ff;
-  --color-primary-content: #04182a;
-  --color-secondary: #6a5cff;
+  --color-primary: #3b82f6;
+  --color-primary-content: #ffffff;
+  --color-secondary: #38bdf8;
   --color-secondary-content: #ffffff;
   --color-accent: #3ab8ff;
   --color-accent-content: #04182a;
@@ -41,16 +44,23 @@
 }
 
 :root {
-  --bg: #070d19;
-  --card: rgba(20, 33, 58, 0.72);
-  --line: rgba(120, 160, 220, 0.16);
+  --bg: #0b0f19;
+  --card: rgba(17, 24, 39, 0.7);
+  --line: rgba(59, 130, 246, 0.4);
   --tx: #eaf1fb;
-  --mut: #8ea3c4;
+  --mut: #9ca3af;
   --on: #22d17a;
   --off: #ff4d5e;
   --man: #ffb020;
-  --acc: #3ab8ff;
-  --glow: rgba(58, 184, 255, 0.18);
+  --acc: #3b82f6;
+  --acc-hover: #38bdf8;
+  --glow: rgba(59, 130, 246, 0.12);
+  --glass-border: rgba(59, 130, 246, 0.4);
+  --glass-border-hover: rgba(56, 189, 248, 0.8);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-glow: 0 0 20px rgba(56, 189, 248, 0.2);
+  --label-color: #9ca3af;
+  --value-color: #ffffff;
 }
 
 html,
@@ -69,18 +79,17 @@ body {
 }
 
 /* Mapa SVG */
+/* Sem filter: drop-shadow no SVG inteiro: um filtro sobre uma malha grande força
+   um novo passe de composição a cada repaint e é uma causa clássica de flicker
+   em GPUs fracas (navegador de TV / stick). A sombra fica no card (shadow-xl). */
 #map {
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+  animation: mapFadeIn 0.6s ease-out both;
 }
 
-#map {
-  filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
-  animation: mapFadeIn 0.8s ease-out both;
-}
-
+/* Fade só com opacity (não anima transform/scale de um SVG filtrado) */
 @keyframes mapFadeIn {
-  from { opacity: 0; transform: scale(0.96); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 #map path {
@@ -95,13 +104,15 @@ body {
 }
 
 /* Pulso nos municípios aderidos */
+/* Antes: fill-opacity contínuo em ~128 <path> = repaint da malha inteira a 60fps.
+   Agora: opacity em degraus (steps) — só repinta ~8 vezes por ciclo. */
 #map path.aderido {
-  animation: aderidoPulse 3s ease-in-out infinite;
+  animation: aderidoPulse 4s steps(8, end) infinite;
 }
 
 @keyframes aderidoPulse {
-  0%, 100% { fill-opacity: 0.18; }
-  50% { fill-opacity: 0.32; }
+  0%, 100% { opacity: 0.72; }
+  50% { opacity: 1; }
 }
 
 /* Ícones de câmera com bounce no hover */
@@ -125,10 +136,44 @@ body {
   color: var(--tx);
 }
 
-/* Borda animada no card do mapa */
+/* Borda do card do mapa */
+/* Antes: gradiente com background-position animado + mask-composite (camada
+   mascarada repintada a 60fps). Agora é estática: mesmo visual, custo zero. */
 #c-map {
   position: relative;
   overflow: hidden;
+}
+
+/* Efeito 3D leve no mapa (perspectiva CSS sobre o SVG gerado do GeoJSON) */
+#c-map .map-3d-wrap {
+  perspective: 1100px;
+  perspective-origin: 50% 40%;
+}
+
+#map.map-3d {
+  transform: rotateX(22deg) scale(0.92);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.45));
+}
+
+#c-map:hover #map.map-3d {
+  transform: rotateX(12deg) scale(0.97);
+}
+
+/* Sombra de profundidade sob o mapa */
+#c-map .map-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 6%;
+  height: 14px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.55), transparent 70%);
+  filter: blur(6px);
+  pointer-events: none;
+  z-index: 0;
 }
 
 #c-map::before {
@@ -138,18 +183,12 @@ body {
   border-radius: inherit;
   padding: 1px;
   background: linear-gradient(120deg, transparent, var(--acc), transparent);
-  background-size: 200% 200%;
-  animation: borderSweep 4s linear infinite;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
+  opacity: 0.5;
   pointer-events: none;
   z-index: 1;
-}
-
-@keyframes borderSweep {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
 }
 
 /* Entrada em cascata dos cards */
@@ -166,15 +205,9 @@ body {
 }
 
 /* Brilho nos ícones de câmera */
-#map g g {
-  filter: drop-shadow(0 0 2px rgba(58, 184, 255, 0.6));
-  animation: camGlow 2.5s ease-in-out infinite;
-}
-
-@keyframes camGlow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(58, 184, 255, 0.4)); }
-  50% { filter: drop-shadow(0 0 6px rgba(58, 184, 255, 0.9)); }
-}
+/* Removida a animação de filter:drop-shadow (camGlow). Animar filtro força um
+   passe de filtro/repaint a cada frame — um dos maiores causadores de flicker.
+   O destaque dos ícones continua no :hover. */
 
 @media (prefers-reduced-motion: reduce) {
   #map, #map path, #map g g, .card, #c-map::before {
@@ -254,4 +287,106 @@ button:hover > .ico-mic,
     animation: none !important;
     transition: none !important;
   }
+}
+
+/* ===== Modo TV / baixo consumo (kiosk) =====
+   Ativado pelo botão "TV" no cabeçalho, por ?lowfx=1 na URL, ou automaticamente
+   quando o sistema pede prefers-reduced-motion. Desliga o que resta de custoso. */
+html.lowfx #map,
+html.lowfx #map path,
+html.lowfx #map g g,
+html.lowfx .card,
+html.lowfx #c-map::before,
+html.lowfx .live-icon,
+html.lowfx .ico-alert,
+html.lowfx .ico-siren,
+html.lowfx .spin,
+html.lowfx .animate-pulse {
+  animation: none !important;
+}
+
+html.lowfx #map,
+html.lowfx #map path,
+html.lowfx #map g g,
+html.lowfx .card,
+html.lowfx #c-map::before {
+  transition: none !important;
+}
+
+html.lowfx #map path.aderido {
+  opacity: 0.85;
+}
+
+html.lowfx [class*="motion-"],
+html.lowfx .badge-success {
+  animation: none !important;
+  transition: none !important;
+}
+
+html.lowfx #map.map-3d {
+  transform: none !important;
+  filter: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #map.map-3d {
+    transform: none !important;
+    filter: none !important;
+  }
+}
+
+/* ===== Glassmorphism escuro (padrão visual) ===== */
+.glass-card {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(59, 130, 246, 0.4);
+  border-radius: 16px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: rgba(56, 189, 248, 0.8);
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+  transform: translateY(-2px);
+}
+
+/* will-change intencionalmente omitido para não inflar memória em TV */
+
+/* Micro-interações extras */
+.btn {
+  transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+.btn:hover {
+  transform: translateY(-1px);
+}
+.btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.badge-success .live-icon,
+.live-icon {
+  text-shadow: 0 0 8px rgba(34, 209, 122, 0.6);
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(34, 209, 122, 0.45); }
+  50% { box-shadow: 0 0 0 6px rgba(34, 209, 122, 0); }
+}
+.badge-success {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+.glass-label {
+  color: #9ca3af;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.glass-value {
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 700;
 }
