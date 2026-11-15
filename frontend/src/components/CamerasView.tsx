@@ -33,7 +33,7 @@ const REFRESH_MS = 2 * 60 * 1000;
 // Cada card do mosaico é um player de vídeo ao vivo (iframe). Num navegador de
 // TV, muitos decodificadores simultâneos estouram a GPU e causam tearing /
 // cintilação. Limita o mosaico e só monta o iframe quando ele está na tela.
-const MAX_LIVE = 6;
+const MAX_LIVE = 24;
 
 function LazyFrame({ src, title }: { src: string; title: string }) {
   const holder = useRef<HTMLDivElement>(null);
