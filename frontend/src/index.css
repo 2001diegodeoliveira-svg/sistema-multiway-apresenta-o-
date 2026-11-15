@@ -144,92 +144,78 @@ body {
   overflow: hidden;
 }
 
-/* ===== Mapa 3D de Mato Grosso (CSS/SVG/JS, sem libs) ===== */
-:root {
-  --cor-topo: #2b4f9e;
-  --cor-topo-fim: #14264d;
-  --cor-borda: #5b8dff;
-  --cor-fundo-mapa: #0a0f1c;
-  --angulo-x: 55deg;
-  --angulo-z: -12deg;
-  --espessura: 14;
-}
-
-#c-map .map-3d-wrap {
+/* ===== Mapa 2D de Mato Grosso (melhorado) ===== */
+#c-map .map-2d-wrap {
   position: relative;
-  perspective: 1200px;
-  perspective-origin: 50% 30%;
-  background: radial-gradient(ellipse at 50% 20%, #12203a 0%, #0a0f1c 70%);
+  background: radial-gradient(ellipse at 50% 30%, #12203a 0%, #0a0f1c 75%);
   overflow: hidden;
   border-radius: 16px;
 }
 
-#c-map .map-3d-wrap::before {
+#c-map .map-2d-wrap::before {
   content: "";
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(80, 120, 200, .08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(80, 120, 200, .08) 1px, transparent 1px);
-  background-size: 30px 30px;
+    linear-gradient(rgba(80, 120, 200, .06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(80, 120, 200, .06) 1px, transparent 1px);
+  background-size: 24px 24px;
   pointer-events: none;
   z-index: 0;
 }
 
-#map.map-3d {
-  transform-style: preserve-3d;
-  transform: rotateX(var(--angulo-x)) rotateZ(var(--angulo-z));
-  transform-origin: 50% 50%;
-  transition: transform .6s ease;
+#map.map-2d {
   width: 100%;
   height: 100%;
   display: block;
 }
 
-#c-map .map-3d-wrap:hover #map.map-3d {
-  transform: rotateX(45deg) rotateZ(-5deg) scale(1.03);
-}
-
-#map .extrusao {
-  filter: drop-shadow(0 30px 25px rgba(0, 0, 0, .7));
-}
-
-#map .extrusao use {
-  stroke: none;
-  pointer-events: none;
-}
-
-#map .topo path {
+/* Municípios (topo) */
+#map .mun {
   fill: url(#gradTopo);
   stroke: var(--cor-borda);
-  stroke-width: .6;
-  transition: transform .25s ease, fill .25s ease, filter .25s ease;
+  stroke-width: .5;
+  transition: fill .2s ease, stroke .2s ease, filter .2s ease, transform .2s ease;
   transform-box: fill-box;
   transform-origin: center;
 }
 
-#map .topo path:hover {
-  transform: translateY(-6px) scale(1.04);
+#map .mun:hover,
+#map .mun:focus {
   fill: #2f6bff;
-  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .6)) drop-shadow(0 0 10px rgba(80, 140, 255, .9));
+  stroke: #9ec5ff;
+  stroke-width: .7;
+  filter: drop-shadow(0 0 6px rgba(80, 140, 255, .7));
+  cursor: pointer;
+  outline: none;
 }
 
-#map .topo path {
-  filter: drop-shadow(0 0 1px rgba(120, 170, 255, .8));
+/* Município monitorado (com câmeras) */
+#map .mun.mon {
+  fill: rgba(58, 184, 255, .18);
+  stroke: var(--acc);
 }
 
+#map .mun.mon:hover,
+#map .mun.mon:focus {
+  fill: rgba(58, 184, 255, .45);
+}
+
+/* Brilho sutil nas bordas */
+#map .mun {
+  filter: drop-shadow(0 0 1px rgba(120, 170, 255, .5));
+}
+
+/* Rótulos */
 #map text.mun-label {
-  font-size: 5px;
+  font-size: 4.5px;
   fill: #e8f0ff;
   paint-order: stroke;
   stroke: #0a0f1c;
-  stroke-width: 1.2px;
+  stroke-width: 1px;
   pointer-events: none;
   opacity: 0;
-  transition: opacity .2s ease;
-  transform-box: fill-box;
-  transform-origin: center;
-  transform: rotateZ(12deg) rotateX(-55deg);
+  transition: opacity .15s ease;
 }
 
 #map text.mun-label.principal,
@@ -237,28 +223,23 @@ body {
   opacity: 1;
 }
 
-#map .topo path:focus {
-  outline: none;
-  transform: translateY(-6px) scale(1.04);
-  fill: #2f6bff;
-  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, .6)) drop-shadow(0 0 10px rgba(80, 140, 255, .9));
+/* Hover: rótulo acompanha */
+#map .mun:hover + text.mun-label,
+#map text.mun-label.is-hover {
+  opacity: 1;
 }
 
+/* Fundo do rótulo para legibilidade */
+#map text.mun-label {
+  /* sem transform 3D */
+}
+
+/* Acessibilidade reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  #map.map-3d,
-  #c-map .map-3d-wrap:hover #map.map-3d,
-  #map .topo path,
+  #map .mun,
   #map text.mun-label {
     transition: none !important;
-    animation: none !important;
-    transform: none !important;
   }
-}
-
-html.lowfx #map.map-3d,
-html.lowfx #c-map .map-3d-wrap:hover #map.map-3d {
-  transform: rotateX(var(--angulo-x)) rotateZ(var(--angulo-z)) !important;
-  transition: none !important;
 }
 
 #c-map::before {

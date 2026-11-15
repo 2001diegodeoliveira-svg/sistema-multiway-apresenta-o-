@@ -117,7 +117,6 @@ export default function App() {
   const [ibgeNames, setIbgeNames] = useState<Record<number, string>>({});
   const [munBoundary, setMunBoundary] = useState<string>("");
   const [allMunPaths, setAllMunPaths] = useState<{ code: string; d: string; c: [number, number] }[]>([]);
-  const ESPESSURA = 14;
   const [hoveredMun, setHoveredMun] = useState<{ nome: string; x: number; y: number } | null>(null);
   const [alertMsg, setAlertMsg] = useState<{ text: string; kind: AlertKind } | null>(null);
   const [heard, setHeard] = useState<string | null>(null);
@@ -304,24 +303,7 @@ export default function App() {
       .catch(() => {});
   }, []);
 
-  // Gera as camadas de extrusão (espessura) via JS a partir de #mt-shape
-  useEffect(() => {
-    const svg = document.getElementById("map");
-    if (!svg || allMunPaths.length === 0) return;
-    const shape = svg.querySelector("#mt-shape");
-    const extrusao = svg.querySelector(".extrusao");
-    if (!shape || !extrusao) return;
-    extrusao.innerHTML = "";
-    const ns = "http://www.w3.org/2000/svg";
-    for (let i = 0; i < ESPESSURA; i++) {
-      const use = document.createElementNS(ns, "use");
-      use.setAttribute("href", "#mt-shape");
-      use.setAttribute("transform", `translate(0, ${i})`);
-      const lightness = 12 + i * 0.4;
-      use.style.fill = `hsl(220 60% ${lightness}%)`;
-      extrusao.appendChild(use);
-    }
-  }, [allMunPaths]);
+
 
   // Notícias: atualiza a cada 60 s e destaca as que chegaram desde a última leitura
   useEffect(() => {
@@ -642,9 +624,8 @@ export default function App() {
                   Mato Grosso · cobertura
                   <em className="not-italic text-primary">tamanho = nº de câmeras</em>
                 </h2>
-                <div className="map-3d-wrap relative min-h-[280px] flex-1">
-                  <div className="map-shadow" aria-hidden="true" />
-                  <svg id="map" viewBox="0 0 118 107" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full map-3d">
+                <div className="map-2d-wrap relative min-h-[280px] flex-1">
+                  <svg id="map" viewBox="0 0 118 107" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full map-2d">
                     <defs>
                       <pattern id="g" width="10" height="10" patternUnits="userSpaceOnUse">
                         <path d="M10 0H0V10" fill="none" stroke="var(--line)" strokeWidth=".2" />
@@ -653,11 +634,6 @@ export default function App() {
                         <stop offset="0%" stopColor="#2b4f9e" />
                         <stop offset="100%" stopColor="#14264d" />
                       </linearGradient>
-                      <g id="mt-shape">
-                        {allMunPaths.map((m) => (
-                          <path key={m.code} d={m.d} />
-                        ))}
-                      </g>
                     </defs>
                     <rect width="118" height="107" fill="url(#g)" opacity=".6" />
                     {outlinePath ? (
@@ -670,9 +646,6 @@ export default function App() {
                         strokeWidth=".5"
                         strokeLinejoin="round"
                       />
-                    )}
-                    {allMunPaths.length > 0 && (
-                      <g className="extrusao" data-extrusao="" />
                     )}
                     {allMunPaths.length > 0 && (
                       <g className="topo" pointerEvents="auto">
@@ -689,7 +662,7 @@ export default function App() {
                               stroke={isMon ? "var(--acc)" : "var(--line)"}
                               strokeWidth={isMon ? (isHover ? 0.7 : 0.45) : isHover ? 0.45 : 0.22}
                               opacity={isMon ? 1 : isHover ? 0.85 : 0.55}
-                              className={isMon ? "aderido" : ""}
+                              className={`mun ${isMon ? "mon aderido" : ""}`}
                               tabIndex={0}
                               style={{ transition: "fill-opacity 0.2s, stroke-width 0.2s, opacity 0.2s", cursor: isMon ? "pointer" : "default" }}
                               onMouseEnter={() => { if (nome) setHoveredMun({ nome, x: 0, y: 0 }); }}
