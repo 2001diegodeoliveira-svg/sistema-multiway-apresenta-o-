@@ -368,18 +368,27 @@ export default function App() {
     return () => window.clearInterval(t);
   }, [isVercel, loadAll]);
 
-  // rotação automática
+  // rotação automática (câmeras fica mais tempo na tela)
+  const DURACAO_VIEW: Record<string, number> = {
+    cameras: 30000,
+    geral: 15000,
+    mapa: 15000,
+    municipios: 15000,
+    atencao: 15000,
+    ocorrencias: 15000,
+  };
   useEffect(() => {
     if (!auto) return;
+    const dur = DURACAO_VIEW[cur] ?? 15000;
     const b = progRef.current;
     if (b) {
       b.style.animation = "none";
       void b.offsetWidth;
-      b.style.animation = "prog 15s linear forwards";
+      b.style.animation = `prog ${dur / 1000}s linear forwards`;
     }
     const t = window.setTimeout(() => {
       setCur((c) => SEQ[(SEQ.indexOf(c) + 1) % SEQ.length]);
-    }, 15000);
+    }, dur);
     return () => window.clearTimeout(t);
   }, [auto, cur]);
 
