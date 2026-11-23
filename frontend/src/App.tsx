@@ -370,7 +370,7 @@ export default function App() {
 
   // rotação automática (câmeras fica mais tempo na tela)
   const DURACAO_VIEW: Record<string, number> = {
-    cameras: 30000,
+    cameras: 60000,
     geral: 15000,
     mapa: 15000,
     municipios: 15000,
